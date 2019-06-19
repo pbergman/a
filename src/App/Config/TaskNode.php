@@ -34,7 +34,7 @@ class TaskNode
                             ->end()
                             ->performNoDeepMerging()
                             ->prototype('scalar')->end()
-                            ->defaultValue(array())
+                            ->defaultValue([])
                         ->end()
                     ->end()
                 ->end()

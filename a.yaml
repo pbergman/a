@@ -1,0 +1,9 @@
+tasks:
+  example:
+#    args:
+#      - hello
+    exec: foo
+    args:
+      test:
+        description: some bla
+        default: foo
