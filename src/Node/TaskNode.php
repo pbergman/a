@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\Node;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -19,11 +19,13 @@ class TaskNode
                         return is_string($v);
                     })
                     ->then(function($v) {
-                        return ['exec' => $v];
+                        return ['exec' => [$v]];
                     })
                 ->end()
                 ->children()
                     ->scalarNode('name')->end()
+                    ->scalarNode('help')->defaultNull()->end()
+                    ->scalarNode('description')->defaultNull()->end()
                     ->booleanNode('hidden')->defaultFalse()->end()
                     ->append((new ArgNode())())
                     ->append((new OptNode())())
@@ -32,7 +34,6 @@ class TaskNode
                             ->ifString()
                                 ->castToArray()
                             ->end()
-                            ->performNoDeepMerging()
                             ->prototype('scalar')->end()
                             ->defaultValue([])
                         ->end()

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\Node;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -36,6 +36,12 @@ class OptNode
                     ->scalarNode('name')->end()
                     ->scalarNode('shortcut')->defaultNull()->end()
                     ->scalarNode('mode')
+                        ->beforeNormalization()
+                            ->ifArray()
+                            ->then(function($v) {
+                                return implode('|', $v);
+                            })
+                        ->end()
                         ->beforeNormalization()
                             ->ifString()
                             ->then(function($v) {

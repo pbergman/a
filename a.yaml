@@ -1,9 +1,9 @@
+plugins: ['env']
+
 tasks:
-  example:
-#    args:
-#      - hello
-    exec: foo
-    args:
-      test:
-        description: some bla
-        default: foo
+  env.ssh:
+    exec: echo "hello world"
+
+envs:
+  testing:
+    ssh: tesing
