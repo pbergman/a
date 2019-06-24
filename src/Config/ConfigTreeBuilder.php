@@ -23,6 +23,7 @@ class ConfigTreeBuilder implements ConfigurationInterface
         $root
             ->children()
                 ->arrayNode('globals')
+                    ->info('extra global context variables')
                     ->defaultValue([])
                     ->variablePrototype()->end()
                 ->end()

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\Command\CommandLoader;
+use App\Command\ConfigDumpReferenceCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -11,9 +12,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Application extends BaseApplication
 {
-    private $input;
+    /** @var ContainerInterface  */
+    private $container;
 
-    public function __construct(CommandLoader $loader, InputInterface $input = null)
+    public function __construct(ContainerInterface $container)
     {
         parent::__construct(<<<EOV
          ___     
@@ -29,13 +31,26 @@ class Application extends BaseApplication
         \__\/
 EOV
 , '0.0.1');
-        $this->setCommandLoader($loader);
-        $this->input = $input;
+
+        $this->setCommandLoader($container->get(CommandLoader::class));
+        $this->container = $container;
     }
 
     public function run(InputInterface $input = null, OutputInterface $output = null)
     {
-        return parent::run($this->input, $output);
+        if (null === $input) {
+            $input = $this->container->get(InputInterface::class);
+        }
+
+        return parent::run($input, $output);
+    }
+
+    /**
+     * @return ContainerInterface
+     */
+    public function getContainer() :ContainerInterface
+    {
+        return $this->container;
     }
 
     protected function getDefaultInputDefinition()

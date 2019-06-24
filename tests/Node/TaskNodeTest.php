@@ -30,6 +30,8 @@ class TaskNodeTest extends TestCase
                             'help' => null,
                             'args' => [],
                             'opts' => [],
+                            'pre' => [],
+                            'post' => [],
                         ]
                     ]
                 ],
@@ -52,6 +54,8 @@ class TaskNodeTest extends TestCase
                             'help' => null,
                             'args' => [],
                             'opts' => [],
+                            'pre' => [],
+                            'post' => [],
                         ]
                     ]
                 ],
@@ -74,6 +78,8 @@ class TaskNodeTest extends TestCase
                             'help' => null,
                             'args' => [],
                             'opts' => [],
+                            'pre' => [],
+                            'post' => [],
                         ]
                     ]
                 ],

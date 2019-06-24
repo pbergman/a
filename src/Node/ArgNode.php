@@ -71,6 +71,7 @@ EOF
                 ->children()
                     ->scalarNode('name')->end()
                     ->scalarNode('mode')
+                         ->info('similar to opts mode (see: tasks.name.opts.name.mode) except it will use the InputArgument::* constants')
                          ->beforeNormalization()
                             ->ifArray()
                             ->then(function($v) {
@@ -98,7 +99,9 @@ EOF
                     ->scalarNode('description')->defaultValue('')->end()
                     ->scalarNode('default')->defaultNull()->end()
                 ->end()
-            ->end();
+            ->end()
+            ->normalizeKeys(false);
+
         return $node;
     }
 }

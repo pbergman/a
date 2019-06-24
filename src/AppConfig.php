@@ -1,11 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace App;
 
 use App\Config\ConfigResources;
 use App\Config\ConfigTreeBuilder;
 use App\Plugin\PluginRegistry;
-use Symfony\Component\Config\Definition\Dumper\YamlReferenceDumper;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -48,15 +48,13 @@ class AppConfig
     {
         if (null === $this->config) {
             $config = Yaml::parseFile($this->getAppConfigFile());
+
             if (isset($config['plugins'])) {
                 foreach ($config['plugins'] as $name) {
                     $this->registerPlugin($name);
                 }
                 unset($config['plugins']);
             }
-////            $this->builder->getConfigTreeBuilder()->getRootNode()->
-//            $dumper = new YamlReferenceDumper();
-//            echo $dumper->dump($this->builder);exit;
 
             $this->config = $this->processor->processConfiguration($this->builder, $this->resources->getConfigs([$config]));
 
@@ -73,9 +71,17 @@ class AppConfig
         return $this->config;
     }
 
-    public function registerPlugin(string $name)
+    public function registerPlugin(string $name) :void
     {
         $this->registry->register($name);
+    }
+
+    public function getGlobals() :array
+    {
+        if (isset($this->getConfig()['globals'])) {
+            return $this->getConfig()['globals'];
+        }
+        return [];
     }
 
     public function getTasks() :array
