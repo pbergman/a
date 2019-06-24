@@ -2,7 +2,7 @@
     "type": "project",
     "license": "proprietary",
     "require": {
-        "php": "^7.1",
+        "php": "^7.2",
         "symfony/config": "^4.3",
         "symfony/yaml": "^4.3",
         "symfony/console": "^4.3"

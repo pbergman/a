@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace App\Plugin;
 
 use App\Config\ConfigArragatorInterface;
+use App\Exception\PluginNotFoundException;
 use Composer\Autoload\ClassLoader;
+use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\Resource\FileResource;
 
 class PluginRegistry implements \IteratorAggregate, ConfigArragatorInterface
@@ -36,14 +38,18 @@ class PluginRegistry implements \IteratorAggregate, ConfigArragatorInterface
     public function register(string $name)
     {
         $prefix = $this->getPluginNsPrefix($name);
-        $root = $this->locator->locate($name);
-        $this->loader->addPsr4($prefix, $root);
-        $className = $prefix . 'Plugin';
-        if (class_exists($className) && is_a($className, PluginInterface::class, true)) {
-            $this->plugins[$name] = [$root, new $className()];
-        }
-        if (file_exists($file = $root . '/a.yaml')) {
-            $this->resource[] = new FileResource($file);
+        try {
+            $root = $this->locator->locate($name);
+            $this->loader->addPsr4($prefix, $root);
+            $className = $prefix . 'Plugin';
+            if (class_exists($className) && is_a($className, PluginInterface::class, true)) {
+                $this->plugins[$name] = [$root, new $className()];
+            }
+            if (file_exists($file = $root . '/a.yaml')) {
+                $this->resource[] = new FileResource($file);
+            }
+        } catch (FileLocatorFileNotFoundException $e) {
+            throw new PluginNotFoundException($name, $e->getPaths(), $e->getCode(), $e);
         }
     }
 

@@ -1,10 +1,11 @@
 <?php
+declare(strict_types=1);
 
 namespace App;
 
 use App\Config\ConfigResources;
 use App\Config\ConfigTreeBuilder;
-use App\Console\CommandLoader;
+use App\Command\CommandLoader;
 use App\Plugin\PluginFileLocator;
 use App\Plugin\PluginRegistry;
 use Composer\Autoload\ClassLoader;
@@ -12,7 +13,7 @@ use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 
-class Container
+class Container implements ContainerInterface
 {
     private $registry;
 
@@ -23,7 +24,7 @@ class Container
         }
     }
 
-    public function register($object)
+    public function register($object) :void
     {
         if (is_object($object)) {
             $this->registry[get_class($object)] = $object;
@@ -34,7 +35,7 @@ class Container
         }
     }
 
-    public function get(string $name)
+    public function get(string $name) :object
     {
         if (isset($this->registry[$name])) {
             return $this->registry[$name];
@@ -49,6 +50,11 @@ class Container
         return $this->registry[$name] = new $name();
     }
 
+    private function default($val, $default)
+    {
+        return (!$val) ? $default : $val;
+    }
+
     private function AppConfigConfigTreeBuilder() :ConfigTreeBuilder
     {
         return new ConfigTreeBuilder($this->get(PluginRegistry::class));
@@ -61,7 +67,7 @@ class Container
 
     private function AppPluginPluginFileLocator() :PluginFileLocator
     {
-        return new PluginFileLocator(getenv('A_PLUGIN_PATH'));
+        return new PluginFileLocator((string)getenv('A_PLUGIN_PATH'));
     }
 
     private function AppConfigConfigResources() :ConfigResources
@@ -74,9 +80,9 @@ class Container
         return new ArgvInput();
     }
 
-    private function AppConsoleCommandLoader() :CommandLoader
+    private function AppCommandCommandLoader() :CommandLoader
     {
-        return new CommandLoader($this->get(AppConfig::class));
+        return new CommandLoader($this->get(AppConfig::class), $this->get(ConfigTreeBuilder::class));
     }
 
     private function AppApplication() :Application

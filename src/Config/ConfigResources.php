@@ -13,15 +13,17 @@ class ConfigResources
         $this->providers = $providers;
     }
 
-    public function getConfigs($append = []) :array
+    public function getConfigs($merge = []) :array
     {
+
+        $data = [];
 
         foreach ($this->providers as $provider) {
             foreach ($provider->getConfigResource() as $resource) {
-                $append[] = Yaml::parseFile($resource->getResource());
+                $data[] = Yaml::parseFile($resource->getResource());
             }
         }
 
-        return $append;
+        return array_merge($data, $merge);
     }
 }

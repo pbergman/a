@@ -17,6 +17,42 @@ class ArgNode
     {
         $node = new ArrayNodeDefinition('args');
         $node
+            ->info(<<<EOF
+An argument can be as simple as key with null value which will normalized to an 
+argument that requires an value:
+
+tasks:
+    example:
+        args:
+            foo: ~
+            
+will be normalized to:
+
+tasks:
+    example:
+        opts:
+            foo: 
+                mode: 1 # InputArgument::REQUIRED
+                
+          
+An other short hand is just to provide an key value pair which will be normalized to 
+an argument where the value is required and default id the value:
+
+tasks:
+    example:
+        artg:
+            foo: bar
+            
+will be normalized to:
+
+tasks:
+    example:
+        artg:
+            foo: 
+                mode: 1 # InputArgument::VALUE_REQUIRED
+                default: bar
+EOF
+            )
             ->defaultValue([])
             ->useAttributeAsKey('name')
             ->arrayPrototype()

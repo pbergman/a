@@ -2,8 +2,12 @@ plugins: ['env']
 
 tasks:
   env.ssh:
-    exec: echo "hello world"
-
+    post:
+      -
+        weight: -10
+        exec: do
+    exec:
+      - echo "hello worlds"
 envs:
   testing:
     ssh: tesing

@@ -50,11 +50,11 @@ class AppConfig
             $config = Yaml::parseFile($this->getAppConfigFile());
             if (isset($config['plugins'])) {
                 foreach ($config['plugins'] as $name) {
-                    $this->registry->register($name);
+                    $this->registerPlugin($name);
                 }
                 unset($config['plugins']);
             }
-//
+////            $this->builder->getConfigTreeBuilder()->getRootNode()->
 //            $dumper = new YamlReferenceDumper();
 //            echo $dumper->dump($this->builder);exit;
 
@@ -71,6 +71,11 @@ class AppConfig
 
         }
         return $this->config;
+    }
+
+    public function registerPlugin(string $name)
+    {
+        $this->registry->register($name);
     }
 
     public function getTasks() :array

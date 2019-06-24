@@ -1,19 +1,13 @@
 <?php
+declare(strict_types=1);
 
 namespace App;
 
-use App\Config\ConfigResources;
-use App\Config\ConfigTreeBuilder;
-use App\Console\CommandLoader;
-use App\Plugin\PluginInterface;
-use App\Plugin\PluginRegistry;
-use Symfony\Component\Config\Definition\Processor;
-use Symfony\Component\Config\Resource\FileResource;
+use App\Command\CommandLoader;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Yaml\Yaml;
 
 class Application extends BaseApplication
 {
