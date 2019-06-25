@@ -2,8 +2,6 @@ plugins: ['env']
 
 tasks:
   env.ssh:
-    pre:
-      - export
     post:
       -
         weight: -10

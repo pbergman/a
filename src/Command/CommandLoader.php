@@ -78,22 +78,24 @@ class CommandLoader implements CommandLoaderInterface
             protected function execute(InputInterface $input, OutputInterface $output)
             {
 
-//                $writer = new CatOutput();
-//                $out = $writer->write('/bin/bash -ex', $this->getName(), $this->cnf);
+                $writer = new CatOutput();
+                $out = $writer->write('/bin/bash -siex', $this->getName(), $this->cnf);
+//                foreach (['pre', 'exec', 'post'] as $group) {
+//                    foreach ($this->cnf[$group] as $index => $line) {
+//                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
+//                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input]))));
+//                        $process = Process::fromShellCommandline(sprintf('/bin/bash -exc \'%s\'', str_replace('\'', '\\\\\'', )));
+//                        $process->setTty(true);
+//                        $process->run(function() {
+//                            var_dump(func_get_args());
+//                        });
+//                    }
+//                }
 
-                foreach (['pre', 'exec', 'post'] as $group) {
-                    foreach ($this->cnf[$group] as $index => $line) {
-                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
-                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input]))));
-                        $process = Process::fromShellCommandline(sprintf('/bin/bash -exc \'%s\'', str_replace('\'', '\\\\\'', )));
-                        $process->setTty(true);
-                        $process->run(function() {
-                            var_dump(func_get_args());
-                        });
-                    }
-                }
+//                $output->writeln($this->twig->createTemplate($out[0])->render(['input' => $input]));exit;
 
-//                $process = new Process(['/bin/bash', '-ex'], null, null);
+                $process = new Process(['/bin/bash', '-ex'], null, null, $this->twig->createTemplate($out[0])->render(['input' => $input]));
+                $process->setTty(true);
 //                $process->setInput((function() use ($input) {
 //                    foreach (['pre', 'exec', 'post'] as $group) {
 //                        foreach ($this->cnf[$group] as $index => $line) {
