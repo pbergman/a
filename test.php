@@ -7,14 +7,14 @@
 //    2 => array("file", "/tmp/error-output.txt", "a") // stderr is a file to write to
 //);
 
-$tmp = fopen('/tmp/error-output.txt', 'wb+');
-fwrite($tmp, "#!/bin/bash\nssh -tq testing 'cd ; bash --login'");
-fclose($tmp);
+//$tmp = fopen('/tmp/error-output.txt', 'wb+');
+//fwrite($tmp, "#!/bin/bash\nssh -tq testing 'cd ; bash --login'");
+//fclose($tmp);
 
 $descriptorspec = array(
-    0 => STDIN,
-    1 => STDOUT,
-    2 => STDERR,
+    0 => array('pty'),
+    1 => array('pty'),
+    2 => array('pty'),
     61 => array("pipe", "r"),
 );
 
@@ -42,7 +42,6 @@ if (is_resource($process)) {
 
 //    fwrite($pipes[61], "read year");
 //    fclose($pipes[61]);
-
 //    echo stream_get_contents($pipes[1]);
 //    fclose($pipes[0]);
 //    fclose($pipes[1]);

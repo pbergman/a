@@ -67,6 +67,7 @@ class AppConfig
                 }
             }
 
+            ksort($this->config);
         }
         return $this->config;
     }

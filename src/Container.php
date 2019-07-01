@@ -3,15 +3,20 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Command\ConfigDumpCommand;
 use App\Command\ConfigDumpReferenceCommand;
+use App\CommandBuilder\CommandBuilderInterface;
+use App\CommandLoader\TasksCommandLoader;
 use App\Config\ConfigResources;
 use App\Config\ConfigTreeBuilder;
-use App\Command\CommandLoader;
+use App\CommandLoader\CommandLoader;
+use App\CommandBuilder\DynamicCommandBuilder;
 use App\Plugin\PluginFileLocator;
 use App\Plugin\PluginRegistry;
 use App\Twig\Extension;
 use Composer\Autoload\ClassLoader;
 use Symfony\Component\Config\Definition\Processor;
+use Symfony\Component\Console\CommandLoader\FactoryCommandLoader;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Twig\Environment;
@@ -81,9 +86,19 @@ class Container implements ContainerInterface
         return new ArgvInput();
     }
 
-    private function AppCommandCommandLoader() :CommandLoader
+    private function AppCommandLoaderCommandLoader() :CommandLoader
     {
-        return new CommandLoader($this);
+        return new CommandLoader($this->get(TasksCommandLoader::class), $this->get(FactoryCommandLoader::class));
+    }
+
+    private function AppCommandLoaderTasksCommandLoader() :TasksCommandLoader
+    {
+        return new TasksCommandLoader($this->get(AppConfig::class), $this->get(CommandBuilderInterface::class));
+    }
+
+    private function AppCommandBuilderCommandBuilderInterface() :CommandBuilderInterface
+    {
+        return new DynamicCommandBuilder($this->get(AppConfig::class), $this->get(Environment::class));
     }
 
     private function AppApplication() :Application
@@ -91,15 +106,43 @@ class Container implements ContainerInterface
         return new Application($this);
     }
 
+    private function SymfonyComponentConsoleCommandLoaderFactoryCommandLoader() :FactoryCommandLoader
+    {
+        return new FactoryCommandLoader([
+            ConfigDumpReferenceCommand::getDefaultName() => function() {
+                return $this->get(ConfigDumpReferenceCommand::class);
+            },
+            ConfigDumpCommand::getDefaultName() => function() {
+                return $this->get(ConfigDumpCommand::class);
+            },
+        ]);
+    }
+
     private function AppAppConfig() :AppConfig
     {
-        return new AppConfig($this->get(InputInterface::class), $this->get(PluginRegistry::class), $this->get(ConfigResources::class), $this->get(Processor::class), $this->get(ConfigTreeBuilder::class));
+        return new AppConfig(
+            $this->get(InputInterface::class),
+            $this->get(PluginRegistry::class),
+            $this->get(ConfigResources::class),
+            $this->get(Processor::class),
+            $this->get(ConfigTreeBuilder::class)
+        );
     }
 
     private function AppCommandConfigDumpReferenceCommand() :ConfigDumpReferenceCommand
     {
-        return new ConfigDumpReferenceCommand($this->get(AppConfig::class), $this->get(ConfigTreeBuilder::class), $this->get(PluginRegistry::class));
+        return new ConfigDumpReferenceCommand(
+            $this->get(AppConfig::class),
+            $this->get(ConfigTreeBuilder::class),
+            $this->get(PluginRegistry::class)
+        );
     }
+
+    private function AppCommandConfigDumpCommand() :ConfigDumpCommand
+    {
+        return new ConfigDumpCommand($this->get(AppConfig::class));
+    }
+
 
     private function TwigLoaderLoaderInterface() :LoaderInterface
     {

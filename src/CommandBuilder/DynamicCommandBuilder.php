@@ -1,50 +1,32 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Command;
+namespace App\CommandBuilder;
 
 use App\AppConfig;
-use App\ContainerInterface;
 use App\Output\CatOutput;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Twig\Environment;
 
-class CommandLoader implements CommandLoaderInterface
+class DynamicCommandBuilder implements CommandBuilderInterface
 {
-    /** @var ContainerInterface  */
-    private $container;
-    /** @var array|string[]|Command[] */
-    private $staticCommands = [];
+    /** @var AppConfig */
+    private $config;
+    /** @var Environment */
+    private $twig;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(AppConfig $config, Environment $twig)
     {
-        $this->container = $container;
-        $this->setStaticCommands();
+        $this->twig = $twig;
+        $this->config = $config;
     }
 
-    private function setStaticCommands()
+    public function getCommand(string $name) :Command
     {
-        $this->staticCommands = [
-            ConfigDumpReferenceCommand::getDefaultName() => ConfigDumpReferenceCommand::class,
-        ];
-    }
-
-    /**
-     * Loads a command.
-     *
-     * @inheritDoc
-     */
-    public function get($name)
-    {
-        if (array_key_exists($name, $this->staticCommands)) {
-            return $this->container->get($this->staticCommands[$name]);
-        }
-
-        return new class($name, $this->container->get(AppConfig::class)->getTasks()[$name], $this->container->get(Environment::class)) extends Command {
+        return new class($name, $this->config->getTasks()[$name], $this->twig) extends Command {
 
             private $cnf;
             private $twig;
@@ -78,10 +60,20 @@ class CommandLoader implements CommandLoaderInterface
             protected function execute(InputInterface $input, OutputInterface $output)
             {
 
-                $writer = new CatOutput();
-                $out = $writer->write('/bin/bash -siex', $this->getName(), $this->cnf);
-//                foreach (['pre', 'exec', 'post'] as $group) {
-//                    foreach ($this->cnf[$group] as $index => $line) {
+//                var_dump($this->cnf);exit;
+//
+//                $writer = new CatOutput();
+//                $out = $writer->write('/bin/bash -siex', $this->getName(), $this->cnf);
+                $script = '#!/bin/bash' . "\nset +ex\n";
+
+                foreach (['pre', 'exec', 'post'] as $group) {
+                    foreach ($this->cnf[$group] as $index => $line) {
+
+                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
+                        $script .= sprintf("# %s\n%s\n", $name, $line);
+
+//                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input])))
+
 //                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
 //                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input]))));
 //                        $process = Process::fromShellCommandline(sprintf('/bin/bash -exc \'%s\'', str_replace('\'', '\\\\\'', )));
@@ -89,13 +81,25 @@ class CommandLoader implements CommandLoaderInterface
 //                        $process->run(function() {
 //                            var_dump(func_get_args());
 //                        });
-//                    }
-//                }
+                    }
+                }
+
+                $output->writeln($script);
+
+                $file = tempnam(sys_get_temp_dir(), $this->getName());
+                file_put_contents($file, $this->twig->createTemplate($script, 'foo')->render(['input' => $input]));
+
+                $process = new Process(['sh', $file]);
+                $process->setTty(true);
+                $process->run(function() {
+                    var_dump(func_get_args());
+                });
+                //$output->writeln($this->twig->createTemplate($script, 'foo')->render(['input' => $input]));
 
 //                $output->writeln($this->twig->createTemplate($out[0])->render(['input' => $input]));exit;
 
-                $process = new Process(['/bin/bash', '-ex'], null, null, $this->twig->createTemplate($out[0])->render(['input' => $input]));
-                $process->setTty(true);
+//                $process = new Process(['/bin/bash', '-ex'], null, null, $this->twig->createTemplate($out[0])->render(['input' => $input]));
+//                $process->setTty(true);
 //                $process->setInput((function() use ($input) {
 //                    foreach (['pre', 'exec', 'post'] as $group) {
 //                        foreach ($this->cnf[$group] as $index => $line) {
@@ -106,12 +110,12 @@ class CommandLoader implements CommandLoaderInterface
 //                })());
 
 
-                $process->start(function($e, $v) {
-                    echo $v;
-                });
-
-                $output->writeln($process->wait());
-                $output->writeln("done....");
+//                $process->start(function($e, $v) {
+//                    echo $v;
+//                });
+//
+//                $output->writeln($process->wait());
+//                $output->writeln("done....");
 //                var_dump($this->cnf);
 //
 //
@@ -121,30 +125,5 @@ class CommandLoader implements CommandLoaderInterface
 //                }
             }
         };
-    }
-
-    public function getAvailableNames() :array
-    {
-        static $names;
-        if (!$names) {
-            $names = array_merge(array_keys($this->container->get(AppConfig::class)->getTasks()), array_keys($this->staticCommands));
-        }
-        return $names;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function has($name)
-    {
-        return in_array($name, $this->getAvailableNames());
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getNames()
-    {
-        return $this->getAvailableNames();
     }
 }

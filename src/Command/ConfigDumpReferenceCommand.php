@@ -4,7 +4,6 @@ namespace App\Command;
 
 use App\AppConfig;
 use App\Config\ConfigTreeBuilder;
-use App\Node\TaskNode;
 use App\Plugin\PluginRegistry;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Dumper\YamlReferenceDumper;
@@ -23,7 +22,7 @@ class ConfigDumpReferenceCommand extends Command
     /** @var PluginRegistry  */
     private $registry;
 
-    protected static $defaultName = 'config:dump:reference';
+    protected static $defaultName = 'config:dump-reference';
 
     public function __construct(AppConfig $config, ConfigTreeBuilder $builder, PluginRegistry $registry)
     {
@@ -37,7 +36,7 @@ class ConfigDumpReferenceCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Dump all the config reference or from the given node path.')
+            ->setDescription('Dump all the default config (or from the given node path).')
             ->addOption('plugin', 'p', InputOption::VALUE_REQUIRED, 'Use this plugin as root for the node tree')
             ->addArgument('path', InputArgument::OPTIONAL, 'The node path to dump')
         ;

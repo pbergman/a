@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\Command\CommandLoader;
+use App\CommandLoader\CommandLoader;
 use App\Command\ConfigDumpReferenceCommand;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;

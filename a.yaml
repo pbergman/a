@@ -1,11 +1,19 @@
 plugins: ['env']
 
+shell: sh
+
 tasks:
   env.ssh:
     post:
-      -
-        weight: -10
-        exec: echo "finished..."
+      - '{{ ''echo "finished..." && sleep 10'' | background(''FOO'') }}'
+      - echo $FOO
+      - wait $FOO
+#      -
+#        weight: -10
+#        exec: '{{ ''echo "finished..."'' | background(''FOO'') }}'
+#      -
+#        weight: -5
+#        exec: echo $FOO
 
 envs:
   testing:
