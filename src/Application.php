@@ -12,10 +12,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Application extends BaseApplication
 {
-    /** @var ContainerInterface  */
-    private $container;
 
-    public function __construct(ContainerInterface $container)
+    private $input;
+    private $output;
+
+    public function __construct(CommandLoader $loader, InputInterface $input, OutputInterface $output)
     {
         parent::__construct(<<<EOV
          ___     
@@ -32,34 +33,31 @@ class Application extends BaseApplication
 EOV
 , '0.0.1');
 
-        $this->setCommandLoader($container->get(CommandLoader::class));
-        $this->container = $container;
+        $this->setCommandLoader($loader);
+        $this->input = $input;
+        $this->output = $output;
     }
 
     public function run(InputInterface $input = null, OutputInterface $output = null)
     {
         if (null === $input) {
-            $input = $this->container->get(InputInterface::class);
+            $input = $this->input;
         }
-
+        if (null === $output) {
+            $output = $this->output;
+        }
         return parent::run($input, $output);
-    }
-
-    /**
-     * @return ContainerInterface
-     */
-    public function getContainer() :ContainerInterface
-    {
-        return $this->container;
     }
 
     protected function getDefaultInputDefinition()
     {
         $definition = parent::getDefaultInputDefinition();
         $definition->addOption(
+            new InputOption('dump', 'd', InputOption::VALUE_NONE, 'Dump the script instead of executing')
+        );
+        $definition->addOption(
             new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'The location of the application config file', AppConfig::getDefaultConfigFile())
         );
         return $definition;
     }
-
 }

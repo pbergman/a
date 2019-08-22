@@ -4,125 +4,71 @@ declare(strict_types=1);
 namespace App\CommandBuilder;
 
 use App\AppConfig;
-use App\Output\CatOutput;
+use App\Exec\ExecInterface;
+use App\ShellScript\ShellScriptFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Process\Process;
-use Twig\Environment;
 
 class DynamicCommandBuilder implements CommandBuilderInterface
 {
     /** @var AppConfig */
-    private $config;
-    /** @var Environment */
-    private $twig;
+    private $cnf;
+    /** @var ShellScriptFactoryInterface */
+    private $ssf;
+    /** @var ExecInterface */
+    private $exec;
 
-    public function __construct(AppConfig $config, Environment $twig)
+    public function __construct(AppConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
     {
-        $this->twig = $twig;
-        $this->config = $config;
+        $this->ssf = $ssf;
+        $this->cnf = $cnf;
+        $this->exec = $exec;
     }
 
     public function getCommand(string $name) :Command
     {
-        return new class($name, $this->config->getTasks()[$name], $this->twig) extends Command {
-
-            private $cnf;
-            private $twig;
-
-            public function __construct(string $name, array $cnf, Environment $twig)
+        return new class($name, $this->cnf,  $this->ssf, $this->exec) extends Command {
+            private $cnf, $ssf, $exec;
+            public function __construct(string $name, AppConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
             {
                 $this->cnf = $cnf;
-                $this->twig = $twig;
+                $this->ssf = $ssf;
+                $this->exec = $exec;
                 parent::__construct($name);
             }
-
             protected function configure()
             {
-                if (!empty($this->cnf['help'])) {
-                    $this->setHelp($this->cnf['help']);
+                $cnf = $this->cnf->getTasks()[$this->getName()];
+                if (!empty($cnf['help'])) {
+                    $this->setHelp($cnf['help']);
                 }
-                if (!empty($this->cnf['description'])) {
-                    $this->setDescription($this->cnf['description']);
+                if (!empty($cnf['description'])) {
+                    $this->setDescription($cnf['description']);
                 }
-                foreach ($this->cnf['opts'] as $name => $opt) {
+                foreach ($cnf['opts'] as $name => $opt) {
                     $this->addOption($name, $opt['shortcut'], $opt['mode'], $opt['description'], $opt['default']);
                 }
-                foreach ($this->cnf['args'] as $name => $arg) {
+                foreach ($cnf['args'] as $name => $arg) {
                     $this->addArgument($name, $arg['mode'], $arg['description'], $arg['default']);
                 }
-                if ($this->cnf['hidden']) {
+                if ($cnf['hidden']) {
                     $this->setHidden(true);
                 }
             }
-
             protected function execute(InputInterface $input, OutputInterface $output)
             {
-
-//                var_dump($this->cnf);exit;
-//
-//                $writer = new CatOutput();
-//                $out = $writer->write('/bin/bash -siex', $this->getName(), $this->cnf);
-                $script = '#!/bin/bash' . "\nset +ex\n";
-
-                foreach (['pre', 'exec', 'post'] as $group) {
-                    foreach ($this->cnf[$group] as $index => $line) {
-
-                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
-                        $script .= sprintf("# %s\n%s\n", $name, $line);
-
-//                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input])))
-
-//                        $name = $this->getName() . '.' . $group . '[' . $index . ']';
-//                        $output->writeln(sprintf('>>>>> /bin/bash -exc \'%s\'', str_replace('\'', '\\\'', $this->twig->render($name, ['input' => $input]))));
-//                        $process = Process::fromShellCommandline(sprintf('/bin/bash -exc \'%s\'', str_replace('\'', '\\\\\'', )));
-//                        $process->setTty(true);
-//                        $process->run(function() {
-//                            var_dump(func_get_args());
-//                        });
+                if ($input->getOption('dump')) {
+                    $this->ssf->create(STDOUT, $this->getName(), $this->cnf, ['input' => $input]);
+                } else {
+                    try {
+                        $script = fopen('php://temp', 'w+');
+                        $this->ssf->create($script, $this->getName(), $this->cnf, ['input' => $input]);
+                        return $this->exec->exec($script);
+                    } finally {
+                        fclose($script);
                     }
                 }
-
-                $output->writeln($script);
-
-                $file = tempnam(sys_get_temp_dir(), $this->getName());
-                file_put_contents($file, $this->twig->createTemplate($script, 'foo')->render(['input' => $input]));
-
-                $process = new Process(['sh', $file]);
-                $process->setTty(true);
-                $process->run(function() {
-                    var_dump(func_get_args());
-                });
-                //$output->writeln($this->twig->createTemplate($script, 'foo')->render(['input' => $input]));
-
-//                $output->writeln($this->twig->createTemplate($out[0])->render(['input' => $input]));exit;
-
-//                $process = new Process(['/bin/bash', '-ex'], null, null, $this->twig->createTemplate($out[0])->render(['input' => $input]));
-//                $process->setTty(true);
-//                $process->setInput((function() use ($input) {
-//                    foreach (['pre', 'exec', 'post'] as $group) {
-//                        foreach ($this->cnf[$group] as $index => $line) {
-//                            $name = $this->getName() . '.' . $group . '[' . $index . ']';
-//                            yield sprintf("  # %s\n  %s\n", $name, $this->twig->render($name, ['input' => $input]));
-//                        }
-//                    }
-//                })());
-
-
-//                $process->start(function($e, $v) {
-//                    echo $v;
-//                });
-//
-//                $output->writeln($process->wait());
-//                $output->writeln("done....");
-//                var_dump($this->cnf);
-//
-//
-//                foreach ($this->cnf['exec'] as $index => $line) {
-//                    $output->writeln('<comment>' . $this->getName() . '.exec.' . $index . '</comment>');
-//                    $output->writeln($this->twig->render($this->getName() . '.exec.' . $index, ['input' => $input]));
-//                }
             }
         };
     }

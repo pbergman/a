@@ -27,6 +27,7 @@ class TaskNode
                     ->scalarNode('help')->defaultNull()->end()
                     ->scalarNode('description')->defaultNull()->end()
                     ->booleanNode('hidden')->defaultFalse()->end()
+                    ->append((new MacroNode())())
                     ->append((new ArgNode())())
                     ->append((new OptNode())())
                     ->append((new PrePostNode())('pre'))

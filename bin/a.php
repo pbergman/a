@@ -5,7 +5,7 @@ use App\Application;
 
 $loader = include_once dirname(__FILE__) . '/../vendor/autoload.php';
 
-(new Container($loader ))->get(Application::class)->run();
+(new Container($loader))->get(Application::class)->run();
 
 //// A_PLUGIN_PATH
 //$path = '/home/philip/workspace/php/lib/a-plugin/*/*:/home/philip/.config/composer/vendor/*/*';

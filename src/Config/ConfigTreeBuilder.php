@@ -4,6 +4,7 @@ namespace App\Config;
 
 use App\Exception\FindInPathException;
 use App\Helper\FileHelper;
+use App\Node\MacroNode;
 use App\Node\TaskNode;
 use App\Plugin\PluginRegistry;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
@@ -30,6 +31,7 @@ class ConfigTreeBuilder implements ConfigurationInterface
                     ->defaultValue([])
                     ->variablePrototype()->end()
                 ->end()
+                ->append((new MacroNode())())
                 ->scalarNode('shell')
                     ->info(<<<EOI
 All tasks will be merged to an shell script to be executed and the global shell will be used for creating the shebang, see:

@@ -3,11 +3,14 @@ plugins: ['env']
 shell: sh
 
 tasks:
+  env.foo: echo "hello"
   env.ssh:
     post:
-      - '{{ ''echo "finished..." && sleep 10'' | background(''FOO'') }}'
-      - echo $FOO
-      - wait $FOO
+      - "{% include 'env.foo' %}"
+#      - '{{ background(''sleep 10'',''FOO'') }}'
+#      - echo $FOO
+#      - wait $FOO
+
 #      -
 #        weight: -10
 #        exec: '{{ ''echo "finished..."'' | background(''FOO'') }}'
@@ -17,5 +20,5 @@ tasks:
 
 envs:
   testing:
-    ssh: testing
+    ssh: git
     root: ~
