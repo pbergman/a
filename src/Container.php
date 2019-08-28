@@ -26,7 +26,11 @@ class Container implements ContainerInterface
         $file = sprintf('./src/Container/%s.php', str_replace('\\', '', $id));
 
         if (file_exists($file)) {
-            return $this->registry[$id] = include_once $file;
+            if (true === ($this->registry[$id] = require_once $file)) {
+                var_dump($file);exit;
+            } else {
+                return $this->registry[$id];
+            }
         }
 
         return $this->registry[$id] = new $id();

@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Twig;
 
 use App\AppConfig;
-use App\Twig\NodeVisitor\DebugNodeVisitor;
-use App\Twig\TokenParser\IncludeTokenParser;
 use Symfony\Component\Console\Output\OutputInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
+use Twig\NodeVisitor\NodeVisitorInterface;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
@@ -19,11 +18,14 @@ class Extension extends AbstractExtension implements GlobalsInterface
     private $config;
     /** @var OutputInterface */
     private $output;
+    /** @var NodeVisitorInterface */
+    private $nodeVisitors;
 
-    public function __construct(AppConfig $config, OutputInterface $output)
+    public function __construct(AppConfig $config, OutputInterface $output, iterable $nodeVisitors)
     {
         $this->config = $config;
         $this->output = $output;
+        $this->nodeVisitors = $nodeVisitors;
     }
 
     public function getFunctions()
@@ -46,11 +48,8 @@ class Extension extends AbstractExtension implements GlobalsInterface
 
     public function getNodeVisitors()
     {
-        return [
-            new DebugNodeVisitor(),
-        ];
+        return $this->nodeVisitors;
     }
-
 
     public function background($line, $name = null)
     {
@@ -61,10 +60,9 @@ class Extension extends AbstractExtension implements GlobalsInterface
         }
     }
 
-
     /** @inheritDoc */
     public function getGlobals()
     {
-        return $this->config->getConfig();
+        return $this->config->getConfig('globals');
     }
 }

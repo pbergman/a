@@ -17,9 +17,12 @@ Macros that can be used reusable logic the templates, see:
 
     https://twig.symfony.com/doc/2.x/tags/macro.html
 
-These will be printed to the header of the template so you
-can call them directly and there is no need to include and
-the `_self.` prefix should sufficient.
+All macros are autoloaded and should be called with the 
+`_self.` prefix. 
+
+To scope macros to an task you should define them under
+an task and when set to the root all plugins have access
+to that macro.  
 EOF
         )
                 ->defaultValue([])

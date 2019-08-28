@@ -6,7 +6,6 @@ namespace App;
 use App\Config\ConfigResources;
 use App\Config\ConfigTreeBuilder;
 use App\Plugin\PluginRegistry;
-use App\Twig\Loader\PluginLoader;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Yaml\Yaml;
@@ -25,19 +24,14 @@ class AppConfig
     private $registry;
     /** @var array */
     private $config;
-    /** @var PluginLoader */
-    private $loader;
-    /** @var array  */
-    private $macros = [];
 
-    public function __construct(InputInterface $input, PluginRegistry $registry, ConfigResources $resources, Processor $processor, ConfigTreeBuilder $builder, PluginLoader $loader)
+    public function __construct(InputInterface $input, PluginRegistry $registry, ConfigResources $resources, Processor $processor, ConfigTreeBuilder $builder)
     {
         $this->input = $input;
         $this->resources = $resources;
         $this->processor = $processor;
         $this->builder = $builder;
         $this->registry = $registry;
-        $this->loader = $loader;
     }
 
     public static function getDefaultConfigFile()
@@ -53,13 +47,24 @@ class AppConfig
     private function initConfig()
     {
         $config = Yaml::parseFile($this->getAppConfigFile());
+
         if (isset($config['plugins'])) {
+
             foreach ($config['plugins'] as $name) {
                 $this->registerPlugin($name);
             }
+
             unset($config['plugins']);
         }
-        $this->config = $this->processor->processConfiguration($this->builder, $this->mergeConfigs($config));
+
+        $this->config = $this->processor->processConfiguration(
+            $this->builder,
+            $this->addTemplateMeta(
+                $this->getConfigResources(
+                    $config
+                )
+            )
+        );
 
         if (isset($this->config['tasks'])) {
             foreach ($this->config['tasks'] as $name => $task) {
@@ -81,50 +86,44 @@ class AppConfig
         return (is_null($name)) ? $this->config : (isset($this->config[$name]) ? $this->config[$name] : null);
     }
 
-    private function mergeConfigs(array $appConfig)
+    private function getConfigResources(array $rootConfig)
     {
         $config = $this->resources->getConfigs();
-        $config['a'] = $appConfig;
-        $this->registerTemplates($config);
+        $config['_'] = $rootConfig;
         return $config;
     }
 
-    public function getTemplateNames(string $task) :array
+    private function addTemplateMeta(array $cnf) :array
     {
-        return $this->loader->getKeysFor(str_replace(':', '.', $task));
-    }
+        $meta = function($task, $plugin, $section = 'exec', $index = 0) :string {
+            return '{# ' .\json_encode(['task' => $task, 'plugin' => $plugin, 'section' => $section, 'index' => $index]) . ' #}';
+        };
 
-    private function registerTemplates(array $root)
-    {
-        $macros = isset($root['macros']) ? $root['macros'] : [];
-        foreach ($root as $name => $config) {
+        foreach ($cnf as $name => &$config) {
             if (!empty($config['tasks'])) {
-                foreach ($config['tasks'] as $taskName => $taskDef) {
+                foreach ($config['tasks'] as $taskName => &$taskDef) {
                     switch (gettype($taskDef)) {
                         case 'string':
-                            $this->loader->addPlugin($taskDef, $name, $taskName);
+                            $taskDef = $meta($taskName, $name) . $taskDef;
                             break;
                         case 'array':
                             foreach (['pre', 'post', 'exec'] as $key) {
                                 if (isset($taskDef[$key])) {
                                     if (is_array($taskDef[$key])) {
-                                        foreach ($taskDef[$key] as $i => $line) {
-                                            $this->loader->addPlugin($line, $name, $taskName, $key);
+                                        foreach ($taskDef[$key] as $i => &$line) {
+                                            $line = $meta($taskName, $name, $key, $i) . $line;
                                         }
                                     } else {
-                                        $this->loader->addPlugin($taskDef[$key], $name, $taskName, $key);
+                                        $taskDef[$key] = $meta($taskName, $name, $key) . $taskDef[$key];
                                     }
                                 }
-                            }
-                            if (isset($taskDef['macros'])) {
-                                $macros = array_merge($macros, $taskDef['macros']);
                             }
                             break;
                     }
                 }
             }
         }
-        $this->macros = $macros;
+        return $cnf;
     }
 
     public function registerPlugin(string $name) :void
@@ -150,9 +149,13 @@ class AppConfig
         }
     }
 
-    /** @return array */
-    public function getMacros(): array
+    /**
+     * @param string|null $task
+     * @return array
+     */
+    public function getMacros(string $task = null) :array
     {
-        return $this->macros;
+        $config = $this->getConfig();
+        return (null === $task) ? $config['macros'] : (isset($config['tasks'][$task]) ? $config['tasks'][$task]['macros'] : []);
     }
 }

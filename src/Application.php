@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App;
 
 use App\CommandLoader\CommandLoader;
-use App\Command\ConfigDumpReferenceCommand;
+use App\Plugin\PluginRegistry;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -12,11 +12,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class Application extends BaseApplication
 {
-
+    /** @var InputInterface  */
     private $input;
+    /** @var OutputInterface  */
     private $output;
+    /** @var AppConfig */
+    private $config;
 
-    public function __construct(CommandLoader $loader, InputInterface $input, OutputInterface $output)
+    public function __construct(CommandLoader $loader, AppConfig $config, PluginRegistry $registry, InputInterface $input, OutputInterface $output)
     {
         parent::__construct(<<<EOV
          ___     
@@ -34,9 +37,18 @@ EOV
 , '0.0.1');
 
         $this->setCommandLoader($loader);
+
+        $this->config = $config;
         $this->input = $input;
         $this->output = $output;
+
+//        $this->init($config, $registry);
     }
+
+//    private function init(AppConfig $config, PluginRegistry $registry)
+//    {
+//        print_r($config->getMacros());exit;
+//    }
 
     public function run(InputInterface $input = null, OutputInterface $output = null)
     {
@@ -46,6 +58,7 @@ EOV
         if (null === $output) {
             $output = $this->output;
         }
+
         return parent::run($input, $output);
     }
 

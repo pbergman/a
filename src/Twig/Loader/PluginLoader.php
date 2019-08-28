@@ -2,102 +2,68 @@
 
 namespace App\Twig\Loader;
 
+use App\AppConfig;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
 
 final class PluginLoader implements LoaderInterface
 {
-    private $tasks  = [];
+    private $config  = [];
 
-    const GROUP_INDEX = -1;
-
-    public function __construct(array $templates = [])
+    public function __construct(AppConfig $config)
     {
-        $this->plugins = $templates;
+        $this->config = $config;
     }
 
-    public function addPlugin(string $exec, string $plugin, string  $task, string $group = 'exec')
+    private function realName(string $name) :string
     {
-        $this->tasks[str_replace('.', ':', $task)][$plugin][$group][] = $exec;
+        return str_replace('.', ':', $name);
     }
 
     private function getCode(string $name) :?string
     {
         static $cache;
 
-        $name = str_replace('.', ':', $name);
+        $name = $this->realName($name);
 
         if (!$cache || false === array_key_exists($name, $cache)) {
-
-            $error = function($name) :LoaderError {
-                return new LoaderError(sprintf('Template "%s" is not defined.', $name));
-            };
-
-            $parts = explode('::', $name, 3);
+            $parts = explode('::', $name, 2);
             $index = null;
+            $tasks = $this->config->getTasks();
 
-            if (isset($parts[2]) && false !== $pos = strpos($parts[2], '[')) {
-                $index = (int)substr($parts[2], $pos+1, -1);
-                $parts[2] = substr($parts[2], 0, $pos);
-            }
-
-            if (!isset($this->tasks[$parts[0]])) {
-                throw $error($name);
+            if (!isset($tasks[$parts[0]])) {
+                throw new LoaderError(sprintf('Template "%s" is not defined.', $name));
             }
 
             switch (count($parts)) {
                 // TASK
                 case 1:
                     $tmpl = '';
-                    foreach (array_keys($this->tasks[$parts[0]]) as $plugin) {
-                        foreach(['pre', 'exec', 'post'] as $group) {
-                            if (isset($this->tasks[$parts[0]][$plugin][$group])) {
-                                for ($i = 0, $c =\count($this->tasks[$parts[0]][$plugin][$group]); $i < $c; $i++) {
-                                    $tmpl .= sprintf("{%% include '%s::%s::%s[%d]' %%}\n", $parts[0], $plugin, $group, $i);
-                                }
-                            }
+                    foreach(['pre', 'exec', 'post'] as $section) {
+                        for ($i = 0, $c =\count($tasks[$parts[0]][$section]); $i < $c; $i++) {
+                            $tmpl .= sprintf("{%% include '%s::%s[%d]' %%}\n", $parts[0], $section, $i);
                         }
                     }
-                    $cache[$name] = $tmpl;
                     break;
-                // TASK::NAME
                 case 2:
-                    if (false === array_key_exists($parts[1], $this->tasks[$parts[0]])) {
-                        throw $error($name);
+                    if (false !== $pos = strpos($parts[1], '[')) {
+                        $index = (int)substr($parts[1], $pos+1, -1);
+                        $parts[1] = substr($parts[1], 0, $pos);
                     }
-                    $tmpl = '';
-                    foreach(['pre', 'exec', 'post'] as $group) {
-                        if (isset($this->tasks[$parts[0]][$parts[1]][$group])) {
-                            for ($i = 0, $c =\count($this->tasks[$parts[0]][$parts[1]][$group]); $i < $c; $i++) {
-                                $tmpl .= sprintf("{%% include '%s::%s::%s[%d]' %%}\n", $parts[0], $parts[1], $group, $i);
-                            }
+                    if (!isset($index)) {
+                        $tmpl = '';
+                        for ($i = 0, $c =\count($tasks[$parts[0]][$parts[1]]); $i < $c; $i++) {
+                            $tmpl .= sprintf("{%% include '%s::%s[%d]' %%}\n", $parts[0], $parts[1], $i);
                         }
-                    }
-                    $cache[$name] = $tmpl;
-                    break;
-                // TASK::NAME::GROUP(INDEX)?
-                case 3:
-                    if (false === array_key_exists($parts[1], $this->tasks[$parts[0]]) || false === array_key_exists($parts[2], $this->tasks[$parts[0]][$parts[1]])) {
-                        throw $error($name);
-                    }
-                    $tmpl = '';
-                    if (null !== $index) {
-                        if (!isset($this->tasks[$parts[0]][$parts[1]][$parts[2]][$index])) {
-                            throw $error($name);
-                        }
-                        $tmpl = $this->tasks[$parts[0]][$parts[1]][$parts[2]][$index];
                     } else {
-                        for ($i = 0, $c =\count($this->tasks[$parts[0]][$parts[1]][$parts[2]]); $i < $c; $i++) {
-                            $tmpl .= sprintf("{%% include '%s::%s::%s[%d]' %%}\n", $parts[0], $parts[1], $parts[2], $i);
-                        }
+                        $tmpl = $tasks[$parts[0]][$parts[1]][$index] . "\n";
                     }
-                    $cache[$name] = $tmpl;
                     break;
             }
+            $cache[$name] = $tmpl;
         }
-
-        return $cache[$name];
+        return (string)$cache[$name];
     }
 
     public function getSourceContext($name)
