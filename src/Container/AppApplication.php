@@ -10,7 +10,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 return new Application(
     $this->get(CommandLoader::class),
     $this->get(AppConfig::class),
-    $this->get(PluginRegistry::class),
     $this->get(InputInterface::class),
     $this->get(OutputInterface::class)
 );

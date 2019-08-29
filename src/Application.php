@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App;
 
 use App\CommandLoader\CommandLoader;
-use App\Plugin\PluginRegistry;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,7 +18,7 @@ class Application extends BaseApplication
     /** @var AppConfig */
     private $config;
 
-    public function __construct(CommandLoader $loader, AppConfig $config, PluginRegistry $registry, InputInterface $input, OutputInterface $output)
+    public function __construct(CommandLoader $loader, AppConfig $config, InputInterface $input, OutputInterface $output)
     {
         parent::__construct(<<<EOV
          ___     
@@ -41,14 +40,8 @@ EOV
         $this->config = $config;
         $this->input = $input;
         $this->output = $output;
-
-//        $this->init($config, $registry);
     }
 
-//    private function init(AppConfig $config, PluginRegistry $registry)
-//    {
-//        print_r($config->getMacros());exit;
-//    }
 
     public function run(InputInterface $input = null, OutputInterface $output = null)
     {
