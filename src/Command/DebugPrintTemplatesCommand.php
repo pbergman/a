@@ -5,21 +5,22 @@ use App\AppConfig;
 use App\Twig\Loader\PluginLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Yaml\Yaml;
 
 class DebugPrintTemplatesCommand extends Command
 {
+    /** @var AppConfig  */
+    private $config;
     /** @var PluginLoader  */
     private $loader;
 
-    protected static $defaultName = 'debug:print:templates';
+    protected static $defaultName = 'debug:print-templates';
 
-    public function __construct(PluginLoader $loader)
+    public function __construct(AppConfig $config, PluginLoader $loader)
     {
         parent::__construct();
+        $this->config = $config;
         $this->loader = $loader;
     }
 
@@ -31,42 +32,32 @@ class DebugPrintTemplatesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $table = new Table($output);
+        $table->setStyle('compact');
+        $table->setHeaders(['name', 'reference', 'content']);
+        $tasks = $this->config->getTasks();
 
-        foreach ($this->loader->getTasks() as $task) {
+        foreach ($tasks as $task => $info) {
+            $table->addRow([$task, '', $this->loader->getSourceContext($task)->getCode()]);
+            foreach (['pre', 'exec', 'post'] as $section) {
+                if (empty($info[$section])) {
+                    continue;
+                }
+                $ns = $task . '::' . $section;
+                $table->addRow([$ns, '', $this->loader->getSourceContext($ns)->getCode()]);
+                for ($i = 0, $c = count($info[$section]); $i < $c; $i++) {
+                    $ns .= '[' . $i . ']';
+                    $ctx = $this->loader->getSourceContext($ns)->getCode();
+                    $pos = strpos($ctx, '#}');
+                    $meta = json_decode(substr($ctx, 3, $pos-3), true);
+                    $ref = sprintf('%s::%s::%s[%d]', $meta['plugin'], $meta['task'], $meta['section'], $meta['index']);
+                    $ctx = substr($ctx, $pos+2);
+                    $table->addRow([$ns, $ref, $ctx]);
+                }
 
-            $output->writeln('<comment>' . $task . '</comment>');
-
-            $table = new Table($output);
-            $table->setStyle('compact');
-            $table->setHeaders(['name', 'content']);
-
-            foreach ($this->loader->getKeysFor($task) as $name) {
-                $table->addRow([$name, $this->loader->getSourceContext($name)->getCode()]);
             }
 
-            $table->render();
-
         }
-
-//        $dumper = new YamlReferenceDumper();
-//
-//        if (null !== $plugin = $input->getOption('plugin')) {
-//
-//            if (!$this->registry->isRegistered($plugin)) {
-//                $this->registry->register($plugin);
-//            }
-//
-//            $builder = new TreeBuilder($plugin);
-//            $root = $builder->getRootNode();
-//            $this->registry->getPlugin($plugin)->appendConfiguration($root);
-//            $output->writeln($dumper->dumpNode($root->getNode(true)));
-//
-//        } else {
-//            if (null === $name = $input->getArgument('path')) {
-//                $output->writeln($dumper->dump($this->builder));
-//            } else {
-//                $output->writeln($dumper->dumpAtPath($this->builder, $name));
-//            }
-//        }
+        $table->render();
     }
 }

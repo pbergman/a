@@ -45,6 +45,7 @@ final class PluginLoader implements LoaderInterface
                             $tmpl .= sprintf("{%% include '%s::%s[%d]' %%}\n", $parts[0], $section, $i);
                         }
                     }
+                    $tmpl = substr($tmpl, 0 , -1);
                     break;
                 case 2:
                     if (false !== $pos = strpos($parts[1], '[')) {
@@ -59,6 +60,7 @@ final class PluginLoader implements LoaderInterface
                     } else {
                         $tmpl = $tasks[$parts[0]][$parts[1]][$index] . "\n";
                     }
+                    $tmpl = substr($tmpl, 0 , -1);
                     break;
             }
             $cache[$name] = $tmpl;
