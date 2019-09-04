@@ -22,8 +22,8 @@ class ConfigTreeBuilder implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $builder = new TreeBuilder('a');
-
         $root = $builder->getRootNode();
+
         $root
             ->children()
                 ->arrayNode('globals')
@@ -55,8 +55,8 @@ EOI
                     ->end()
                 ->end()
                 ->append((new TaskNode())())
-            ->end();
-
+            ->end()
+        ;
 
         foreach ($this->registry as $plugin) {
             $plugin->appendConfiguration($root);

@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace App\CommandBuilder;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\Exec\ExecInterface;
 use App\ShellScript\ShellScriptFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DynamicCommandBuilder implements CommandBuilderInterface
@@ -55,6 +56,7 @@ class DynamicCommandBuilder implements CommandBuilderInterface
                 if ($cnf['hidden']) {
                     $this->setHidden(true);
                 }
+                $this->addOption('dump', 'd', InputOption::VALUE_NONE, 'Dump the script instead of executing');
             }
             protected function execute(InputInterface $input, OutputInterface $output)
             {

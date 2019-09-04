@@ -1,5 +1,5 @@
 <?php
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\Command\DebugPrintTemplatesCommand;
 use App\Twig\Loader\PluginLoader;
 

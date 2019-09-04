@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App;
 
 use App\CommandLoader\CommandLoader;
+use App\Config\AppConfig;
+use App\Config\AppConfigFile;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -17,8 +19,10 @@ class Application extends BaseApplication
     private $output;
     /** @var AppConfig */
     private $config;
+    /** @var AppConfigFile  */
+    private $configFile;
 
-    public function __construct(CommandLoader $loader, AppConfig $config, InputInterface $input, OutputInterface $output)
+    public function __construct(CommandLoader $loader, AppConfig $config, InputInterface $input, OutputInterface $output, AppConfigFile $configFile)
     {
         parent::__construct(<<<EOV
          ___     
@@ -37,6 +41,7 @@ EOV
 
         $this->setCommandLoader($loader);
 
+        $this->configFile = $configFile;
         $this->config = $config;
         $this->input = $input;
         $this->output = $output;
@@ -58,12 +63,12 @@ EOV
     protected function getDefaultInputDefinition()
     {
         $definition = parent::getDefaultInputDefinition();
-        $definition->addOption(
-            new InputOption('dump', 'd', InputOption::VALUE_NONE, 'Dump the script instead of executing')
-        );
-        $definition->addOption(
-            new InputOption('config', 'c', InputOption::VALUE_REQUIRED, 'The location of the application config file', AppConfig::getDefaultConfigFile())
-        );
+
+        $definition->addOptions([
+                new InputOption('no-cache', 'N', InputOption::VALUE_NONE, 'Disable the cache on runtime'),
+                $this->configFile->getInputOption(),
+        ]);
+
         return $definition;
     }
 }

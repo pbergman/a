@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Helper;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 
 class ScriptWriter
 {

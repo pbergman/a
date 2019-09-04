@@ -1,5 +1,5 @@
 <?php
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\Command\DebugConfigDumpReferenceCommand;
 use App\Config\ConfigTreeBuilder;
 use App\Plugin\PluginRegistry;

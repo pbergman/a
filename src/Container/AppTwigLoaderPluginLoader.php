@@ -1,5 +1,9 @@
 <?php
-use App\AppConfig;
+use App\Config\AppConfig;
+use App\Plugin\PluginRegistry;
 use App\Twig\Loader\PluginLoader;
 
-return new PluginLoader($this->get(AppConfig::class));
+return new PluginLoader(
+    $this->get(AppConfig::class),
+    $this->get(PluginRegistry::class)
+);

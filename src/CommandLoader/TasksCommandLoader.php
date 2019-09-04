@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\CommandLoader;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\CommandBuilder\CommandBuilderInterface;
 use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
 

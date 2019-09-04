@@ -3,14 +3,13 @@ declare(strict_types=1);
 
 namespace App\Plugin;
 
-use App\Config\ConfigArragatorInterface;
 use App\Exception\PluginException;
 use App\Exception\PluginNotFoundException;
 use Composer\Autoload\ClassLoader;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\Resource\FileResource;
 
-class PluginRegistry implements \IteratorAggregate, ConfigArragatorInterface
+class PluginRegistry implements \IteratorAggregate
 {
     /** @var array */
     private $plugins = [];
@@ -64,13 +63,13 @@ class PluginRegistry implements \IteratorAggregate, ConfigArragatorInterface
         }
     }
 
-    public function getPlugin(string $name) :PluginInterface
+    public function getPlugin(string $name) :?PluginInterface
     {
         return (isset($this->plugins[$name])) ? $this->plugins[$name] : null;
     }
 
     /**
-     * @inheritDoc
+     * @return \Generator|PluginInterface[]
      */
     public function getIterator() :\Generator
     {
@@ -79,9 +78,15 @@ class PluginRegistry implements \IteratorAggregate, ConfigArragatorInterface
         }
     }
 
-    /** @return \Symfony\Component\Config\Resource\FileResource[] */
-    public function getConfigResource() :array
+    /** @inheritDoc */
+    public function getConfigResource(string $plugin = null)
     {
+        if (null !== $plugin) {
+            if (!isset($this->resource[$plugin])) {
+                throw new PluginNotFoundException($plugin);
+            }
+            return $this->resource[$plugin];
+        }
         return $this->resource;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 namespace App\ShellScript;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 
 interface ShellScriptFactoryInterface
 {

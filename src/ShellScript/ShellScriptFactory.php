@@ -1,7 +1,7 @@
 <?php
 namespace App\ShellScript;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use Twig\Environment;
 use Twig\Extension\ProfilerExtension;
 
@@ -28,7 +28,7 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
         unset($extra['globals'], $extra['macros'], $extra['macros'], $extra['tasks']);
 
         if (($output = $this->twig->render($name, array_merge($ctx, $extra))) && !empty($output)) {
-            fwrite($fd, $output . "\n");
+            fwrite($fd, $output);
         }
     }
 }

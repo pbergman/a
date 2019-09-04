@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Twig\NodeVisitor;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use Twig\Environment;
 use Twig\Node\ModuleNode;
 use Twig\Node\Node;

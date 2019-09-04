@@ -1,5 +1,5 @@
 <?php
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\CommandBuilder\CommandBuilderInterface;
 use App\CommandLoader\TasksCommandLoader;
 

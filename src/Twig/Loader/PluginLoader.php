@@ -2,75 +2,51 @@
 
 namespace App\Twig\Loader;
 
-use App\AppConfig;
+use App\Config\AppConfig;
+use App\Exception\PluginNotFoundException;
+use App\Exception\TaskNotExistException;
+use App\Plugin\PluginCacheInterface;
+use App\Plugin\PluginRegistry;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
 
 final class PluginLoader implements LoaderInterface
 {
-    private $config  = [];
+    /** @var AppConfig  */
+    private $config;
+    /** @var PluginRegistry  */
+    private $registry;
 
-    public function __construct(AppConfig $config)
+    public function __construct(AppConfig $config, PluginRegistry $registry)
     {
         $this->config = $config;
-    }
-
-    private function realName(string $name) :string
-    {
-        return str_replace('.', ':', $name);
+        $this->registry = $registry;
     }
 
     private function getCode(string $name) :?string
     {
-        static $cache;
-
-        $name = $this->realName($name);
-
-        if (!$cache || false === array_key_exists($name, $cache)) {
-            $parts = explode('::', $name, 2);
-            $index = null;
-            $tasks = $this->config->getTasks();
-
-            if (!isset($tasks[$parts[0]])) {
-                throw new LoaderError(sprintf('Template "%s" is not defined.', $name));
-            }
-
-            switch (count($parts)) {
-                // TASK
-                case 1:
-                    $tmpl = '';
-                    foreach(['pre', 'exec', 'post'] as $section) {
-                        for ($i = 0, $c =\count($tasks[$parts[0]][$section]); $i < $c; $i++) {
-                            $tmpl .= sprintf("{%% include '%s::%s[%d]' %%}\n", $parts[0], $section, $i);
-                        }
-                    }
-                    $tmpl = substr($tmpl, 0 , -1);
-                    break;
-                case 2:
-                    if (false !== $pos = strpos($parts[1], '[')) {
-                        $index = (int)substr($parts[1], $pos+1, -1);
-                        $parts[1] = substr($parts[1], 0, $pos);
-                    }
-                    if (!isset($index)) {
-                        $tmpl = '';
-                        for ($i = 0, $c =\count($tasks[$parts[0]][$parts[1]]); $i < $c; $i++) {
-                            $tmpl .= sprintf("{%% include '%s::%s[%d]' %%}\n", $parts[0], $parts[1], $i);
-                        }
-                    } else {
-                        $tmpl = $tasks[$parts[0]][$parts[1]][$index] . "\n";
-                    }
-                    $tmpl = substr($tmpl, 0 , -1);
-                    break;
-            }
-            $cache[$name] = $tmpl;
+        try {
+            return $this->config->getCode($name);
+        } catch (TaskNotExistException $e) {
+            throw new LoaderError(sprintf('Template "%s" is not defined.', $name), -1, null, $e);
         }
-        return (string)$cache[$name];
+
     }
 
     public function getSourceContext($name)
     {
-        return new Source($this->getCode((string) $name), (string)$name);
+        $ctx = $this->getCode((string) $name);
+
+        if (substr($ctx, strpos($ctx, '#}')+2, 1) === '@') {
+            try {
+                $ctx = $this->getCode((string) substr($ctx, strpos($ctx, '#}')+3));
+            } catch (LoaderError $e) {
+                // nothing...
+            }
+        }
+
+        return new Source($ctx, (string)$name);
     }
 
     public function exists($name)
@@ -91,6 +67,22 @@ final class PluginLoader implements LoaderInterface
     public function isFresh($name, $time)
     {
         $this->getCode((string)$name);
-        return true;
+        $name = explode(':', $name)[0];
+
+        if (null !== $plugin = $this->registry->getPlugin($name)) {
+            if (($plugin instanceof PluginCacheInterface) && $plugin->isFresh($time)) {
+                return true;
+            }
+        }
+
+        try {
+            // Only check the a.yaml file from the plugin because only when this
+            // changes the cache is invalid. When an Plugin file is changed the
+            // cache should not be directly changed.
+            return $this->registry->getConfigResource($name)->isFresh($time);
+        } catch (PluginNotFoundException $e) {
+            return true;
+        }
+
     }
 }

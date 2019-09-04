@@ -1,7 +1,7 @@
 <?php
 namespace App\Command;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\Twig\Loader\PluginLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -44,7 +44,7 @@ class DebugPrintTemplatesCommand extends Command
                     continue;
                 }
                 $ns = $task . '::' . $section;
-                $table->addRow([$ns, '', $this->loader->getSourceContext($ns)->getCode()]);
+                $table->addRow([$ns, '', trim($this->loader->getSourceContext($ns)->getCode())]);
                 for ($i = 0, $c = count($info[$section]); $i < $c; $i++) {
                     $ns .= '[' . $i . ']';
                     $ctx = $this->loader->getSourceContext($ns)->getCode();
@@ -52,7 +52,7 @@ class DebugPrintTemplatesCommand extends Command
                     $meta = json_decode(substr($ctx, 3, $pos-3), true);
                     $ref = sprintf('%s::%s::%s[%d]', $meta['plugin'], $meta['task'], $meta['section'], $meta['index']);
                     $ctx = substr($ctx, $pos+2);
-                    $table->addRow([$ns, $ref, $ctx]);
+                    $table->addRow([$ns, $ref, trim($ctx)]);
                 }
 
             }

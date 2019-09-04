@@ -1,5 +1,5 @@
 <?php
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\CommandBuilder\DynamicCommandBuilder;
 use App\Exec\ExecInterface;
 use App\ShellScript\ShellScriptFactoryInterface;

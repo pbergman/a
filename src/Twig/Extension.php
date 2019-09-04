@@ -1,10 +1,9 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Twig;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use Symfony\Component\Console\Output\OutputInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;

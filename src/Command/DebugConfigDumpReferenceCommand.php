@@ -1,7 +1,7 @@
 <?php
 namespace App\Command;
 
-use App\AppConfig;
+use App\Config\AppConfig;
 use App\Config\ConfigTreeBuilder;
 use App\Plugin\PluginRegistry;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
