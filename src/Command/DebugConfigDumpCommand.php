@@ -27,6 +27,17 @@ class DebugConfigDumpCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln(Yaml::dump($this->config->getConfig(), 10));
+        $config = $this->config->getConfig();
+
+        foreach ($config['tasks'] as &$task) {
+            foreach (['pre','post','exec'] as $leave) {
+                foreach ($task[$leave] as $index => $value) {
+                    $task[$leave][$index] = (string)$value;
+                }
+
+            }
+        }
+
+        $output->writeln(Yaml::dump($config, 10));
     }
 }

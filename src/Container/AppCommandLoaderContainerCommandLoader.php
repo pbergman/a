@@ -1,4 +1,6 @@
 <?php
+
+use App\Command\CacheClearCommand;
 use App\CommandLoader\ContainerCommandLoader;
 use App\Command\DebugConfigDumpCommand;
 use App\Command\DebugConfigDumpReferenceCommand;
@@ -8,5 +10,6 @@ return new ContainerCommandLoader(
     $this,
     DebugConfigDumpCommand::class,
     DebugConfigDumpReferenceCommand::class,
-    DebugPrintTemplatesCommand::class
+    DebugPrintTemplatesCommand::class,
+    CacheClearCommand::class
 );

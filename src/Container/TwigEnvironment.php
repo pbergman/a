@@ -5,11 +5,12 @@ use App\Plugin\PluginRegistry;
 use App\Twig\Extension;
 use App\Helper\FileHelper;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 use Twig\Environment;
 use Twig\Extension\ExtensionInterface;
 use Twig\Loader\LoaderInterface;
 
-if (false !== $this->get(InputInterface::class)->getParameterOption(['--no-cache', '-N'], false, true)) {
+if (false === $this->get(InputInterface::class)->getParameterOption(['--no-cache', '-N'], false, true)) {
     $cache = FileHelper::getCacheDir('twig', sha1((string)$this->get(AppConfigFile::class)->getAppConfigFile()));
     if (!is_dir($cache)) {
         if (false === mkdir($cache, 0700, true)) {
@@ -25,8 +26,9 @@ $instance = new Environment(
     [
         'strict_variables' => 1,
         'autoescape' => false,
-        'debug' => true,
-        'cache' => $cache
+        'auto_reload' => true,
+        'debug' => $this->get(OutputInterface::class)->isDebug(),
+        'cache' => $cache,
     ]
 );
 

@@ -33,7 +33,7 @@ final class PluginLoader implements LoaderInterface
         try {
             $ret = '';
             foreach ($this->config->getCode($name) as $line) {
-                $ret .= $this->processor->process($line) . "\n'";
+                $ret .= $this->processor->process($line);
             }
             return $ret;
         } catch (TaskNotExistException $e) {
@@ -44,15 +44,7 @@ final class PluginLoader implements LoaderInterface
 
     public function getSourceContext($name)
     {
-        try {
-            $ret = '';
-            foreach ($this->config->getCode($name) as $line) {
-                $ret .= $this->processor->process($line);
-            }
-            return new Source($ret, (string)$name);
-        } catch (TaskNotExistException $e) {
-            throw new LoaderError(sprintf('Template "%s" is not defined.', $name), -1, null, $e);
-        }
+        return new Source($this->getCode($name), (string)$name);
     }
 
     public function exists($name)

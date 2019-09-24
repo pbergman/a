@@ -40,11 +40,11 @@ class DebugConfigDumpReferenceCommand extends Command
 
 This command can be used to generate default config:
 
-    debug:dump-config-reference -p <PLUGIN_NAME>
+    debug:config:dump-reference -p <PLUGIN_NAME>
 
 Or to get some information about an node:
     
-    debug:dump-config-reference tasks.name.opts 
+    debug:config:dump-reference tasks.name.opts 
 
 EOH
 )

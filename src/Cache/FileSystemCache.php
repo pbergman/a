@@ -68,6 +68,10 @@ class FileSystemCache implements CacheInterface
                 return false;
             }
         }
+        foreach (glob(FileHelper::joinPath($this->base, '*'), GLOB_ONLYDIR) as $file) {
+            rmdir($file);
+        }
+        rmdir($this->base);
         return true;
     }
 

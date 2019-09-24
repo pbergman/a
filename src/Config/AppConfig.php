@@ -57,8 +57,7 @@ class AppConfig
 
             foreach (['pre', 'post', 'exec'] as $section) {
                 foreach ($cnf['tasks'][$real][$section] as $index => $line) {
-                    $data = json_decode($line, true);
-                    $cnf['tasks'][$real][$section][$index] = new TaskEntry($data['exec'], $data['task'], $data['plugin'], $data['section'], $data['index']);
+                    $cnf['tasks'][$real][$section][$index] = $this->newTaskEntry($line);
                 }
             }
         }
@@ -66,6 +65,23 @@ class AppConfig
         ksort($cnf['tasks']);
 
         return $cnf;
+    }
+
+    private function newTaskEntry(string $line) :TaskEntry
+    {
+        $data = json_decode($line, true);
+
+        if ("\n" !== substr($data['exec'], -1)) {
+            $data['exec'] .= "\n";
+        }
+
+        return new TaskEntry(
+            $data['exec'],
+            $data['task'],
+            $data['plugin'],
+            $data['section'],
+            $data['index']
+        );
     }
 
     public function getConfig(string $name = null)

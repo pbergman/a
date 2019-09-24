@@ -14,6 +14,18 @@
 use Symfony\Component\Console\Output\OutputInterface;
 //
 include_once 'vendor/autoload.php';
+
+
+$a = ['b', 'c', 'd'];
+$incl = '{% include ';
+$incl .= sprintf('[\'%s\'] %%}', implode('\', \'', $a));
+var_dump($incl );exit;
+
+$task = new \App\Model\TaskEntry('echo foo', 'env:ssh', 'env');
+
+
+var_dump(var_export($task, true));exit;
+
 //
 //class StreamLogger
 //{

@@ -21,7 +21,8 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
     /** @inheritDoc */
     public function create($fd, string $name, AppConfig $cnf, array $ctx = [])
     {
-        fwrite($fd, "#!/bin/bash\n");
+
+        fwrite($fd, sprintf("#!%s\n", $cnf->getConfig('shell', '/bin/bash')));
         fwrite($fd, sprintf("set -e%s\n", $this->debug ? 'x' : null));
 
         $extra = $cnf->getConfig();

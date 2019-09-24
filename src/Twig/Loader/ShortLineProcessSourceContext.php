@@ -27,11 +27,11 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
                         break;
                     // https://twig.symfony.com/doc/2.x/tags/embed.html
                     case 'embed':
-                        $this->embed($m);
+                        return $this->embed($m);
                         break;
                     // https://twig.symfony.com/doc/2.x/tags/block.html
                     case 'block':
-                        $this->block($m);
+                        return $this->block($m);
                         break;
 
                 }

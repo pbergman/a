@@ -5,7 +5,6 @@ namespace App\Model;
 
 class TaskEntry
 {
-
     /** @var string */
     private $exec;
     /** @var TaskMeta */
@@ -17,9 +16,12 @@ class TaskEntry
         $this->meta = new TaskMeta($task, $plugin, $section, $index);
     }
 
-    public static function __set_state($an_array)
+    public static function __set_state($state)
     {
-        // TODO: Implement __set_state() method.
+        $task = (new \ReflectionClass(__CLASS__))->newInstanceWithoutConstructor();
+        $task->exec = $state['exec'];
+        $task->meta = $state['meta'];
+        return $task;
     }
 
 

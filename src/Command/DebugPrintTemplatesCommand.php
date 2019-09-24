@@ -2,6 +2,7 @@
 namespace App\Command;
 
 use App\Config\AppConfig;
+use App\Model\TaskMeta;
 use App\Twig\Loader\PluginLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -46,17 +47,14 @@ class DebugPrintTemplatesCommand extends Command
                 $ns = $task . '::' . $section;
                 $table->addRow([$ns, '', trim($this->loader->getSourceContext($ns)->getCode())]);
                 for ($i = 0, $c = count($info[$section]); $i < $c; $i++) {
+                    /** @var TaskMeta $meta */
+                    $meta = $tasks[$task][$section][$i]->getMeta();
                     $ns .= '[' . $i . ']';
                     $ctx = $this->loader->getSourceContext($ns)->getCode();
-                    $pos = strpos($ctx, '#}');
-                    $meta = json_decode(substr($ctx, 3, $pos-3), true);
-                    $ref = sprintf('%s::%s::%s[%d]', $meta['plugin'], $meta['task'], $meta['section'], $meta['index']);
-                    $ctx = substr($ctx, $pos+2);
+                    $ref = sprintf('%s::%s::%s[%d]', $meta->getPlugin(), $meta->getTask(), $meta->getSection(), $meta->getIndex());
                     $table->addRow([$ns, $ref, trim($ctx)]);
                 }
-
             }
-
         }
         $table->render();
     }

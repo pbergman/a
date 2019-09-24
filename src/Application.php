@@ -65,7 +65,7 @@ EOV
         $definition = parent::getDefaultInputDefinition();
 
         $definition->addOptions([
-                new InputOption('no-cache', 'N', InputOption::VALUE_NONE, 'Disable the cache on runtime'),
+                new InputOption('no-cache', 'N', InputOption::VALUE_NONE, 'Disable the cache on runtime.'),
                 $this->configFile->getInputOption(),
         ]);
 
