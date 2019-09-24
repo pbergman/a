@@ -25,7 +25,7 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
         fwrite($fd, sprintf("set -e%s\n", $this->debug ? 'x' : null));
 
         $extra = $cnf->getConfig();
-        unset($extra['globals'], $extra['macros'], $extra['macros'], $extra['tasks']);
+        unset($extra['globals'], $extra['macros'], $extra['tasks']);
 
         if (($output = $this->twig->render($name, array_merge($ctx, $extra))) && !empty($output)) {
             fwrite($fd, $output);

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Twig\Loader;
 
@@ -17,17 +18,24 @@ final class PluginLoader implements LoaderInterface
     private $config;
     /** @var PluginRegistry  */
     private $registry;
+    /** @var ProcessSourceContextInterface */
+    private $processor;
 
-    public function __construct(AppConfig $config, PluginRegistry $registry)
+    public function __construct(AppConfig $config, PluginRegistry $registry, ProcessSourceContextInterface $processor)
     {
         $this->config = $config;
         $this->registry = $registry;
+        $this->processor = $processor;
     }
 
     private function getCode(string $name) :?string
     {
         try {
-            return $this->config->getCode($name);
+            $ret = '';
+            foreach ($this->config->getCode($name) as $line) {
+                $ret .= $this->processor->process($line) . "\n'";
+            }
+            return $ret;
         } catch (TaskNotExistException $e) {
             throw new LoaderError(sprintf('Template "%s" is not defined.', $name), -1, null, $e);
         }
@@ -36,17 +44,15 @@ final class PluginLoader implements LoaderInterface
 
     public function getSourceContext($name)
     {
-        $ctx = $this->getCode((string) $name);
-
-        if (substr($ctx, strpos($ctx, '#}')+2, 1) === '@') {
-            try {
-                $ctx = $this->getCode((string) substr($ctx, strpos($ctx, '#}')+3));
-            } catch (LoaderError $e) {
-                // nothing...
+        try {
+            $ret = '';
+            foreach ($this->config->getCode($name) as $line) {
+                $ret .= $this->processor->process($line);
             }
+            return new Source($ret, (string)$name);
+        } catch (TaskNotExistException $e) {
+            throw new LoaderError(sprintf('Template "%s" is not defined.', $name), -1, null, $e);
         }
-
-        return new Source($ctx, (string)$name);
     }
 
     public function exists($name)

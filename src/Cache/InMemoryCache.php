@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Cache;
 
-use App\Helper\FileHelper;
 use Psr\SimpleCache\CacheInterface;
 
 class InMemoryCache implements CacheInterface

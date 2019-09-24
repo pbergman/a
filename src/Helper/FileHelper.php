@@ -39,7 +39,7 @@ class FileHelper
         }
 
         if (empty($home)) {
-            throw new RuntimeException('Could not determin the user home directory');
+            throw new RuntimeException('Could not determine the user home directory');
         }
 
         return rtrim($home, DIRECTORY_SEPARATOR);

@@ -109,7 +109,7 @@ class AppConfig
         return str_replace('.', ':', $name);
     }
 
-    public function getCode(string $name) :string
+    public function getCode(string $name) :array
     {
         static $cache;
         $name = $this->realName($name);
@@ -117,19 +117,18 @@ class AppConfig
             $parts = explode('::', $name, 2);
             $index = null;
             $tasks = $this->getTasks();
+            $tmpl = [];
             if (!isset($tasks[$parts[0]])) {
                 throw new TaskNotExistException($name);
             }
             switch (count($parts)) {
                 // TASK
                 case 1:
-                    $tmpl = '';
                     foreach(['pre', 'exec', 'post'] as $section) {
                         for ($i = 0, $c =\count($tasks[$parts[0]][$section]); $i < $c; $i++) {
-                            $tmpl .= sprintf("@include(%s::%s[%d])\n", $parts[0], $section, $i);
+                            $tmpl[] = sprintf("include(%s::%s[%d])\n", $parts[0], $section, $i);
                         }
                     }
-                    $tmpl = substr($tmpl, 0 , -1);
                     break;
                 case 2:
                     if (false !== $pos = strpos($parts[1], '[')) {
@@ -137,18 +136,16 @@ class AppConfig
                         $parts[1] = substr($parts[1], 0, $pos);
                     }
                     if (!isset($index)) {
-                        $tmpl = '';
                         for ($i = 0, $c =\count($tasks[$parts[0]][$parts[1]]); $i < $c; $i++) {
-                            $tmpl .= sprintf("@include(%s::%s[%d])\n", $parts[0], $parts[1], $i);
+                            $tmpl[] = sprintf("@include(%s::%s[%d])\n", $parts[0], $parts[1], $i);
                         }
                     } else {
-                        $tmpl = (string)$tasks[$parts[0]][$parts[1]][$index] . "\n";
+                        $tmpl[] = (string)$tasks[$parts[0]][$parts[1]][$index];
                     }
-                    $tmpl = substr($tmpl, 0 , -1);
                     break;
             }
             $cache[$name] = $tmpl;
         }
-        return (string)$cache[$name];
+        return $cache[$name];
     }
 }
