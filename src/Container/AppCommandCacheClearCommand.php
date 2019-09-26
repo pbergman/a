@@ -1,5 +1,4 @@
 <?php
-
 use App\Command\CacheClearCommand;
 use Psr\SimpleCache\CacheInterface;
 use Twig\Environment;

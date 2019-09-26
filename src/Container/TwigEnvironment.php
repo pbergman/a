@@ -1,24 +1,22 @@
 <?php
-
 use App\Config\AppConfigFile;
-use App\Plugin\PluginRegistry;
 use App\Twig\Extension;
 use App\Helper\FileHelper;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Twig\Environment;
-use Twig\Extension\ExtensionInterface;
 use Twig\Loader\LoaderInterface;
 
-if (false === $this->get(InputInterface::class)->getParameterOption(['--no-cache', '-N'], false, true)) {
+$input = $this->get(InputInterface::class);
+$debug = 3 === (int) getenv('SHELL_VERBOSITY') || $input->hasParameterOption('-vvv', true);
+
+if (false !== $cache = !$input->hasParameterOption(['--no-cache', '-N'], true)) {
+    // get cache folder, should be something like ~/.cache/a/twig
     $cache = FileHelper::getCacheDir('twig', sha1((string)$this->get(AppConfigFile::class)->getAppConfigFile()));
-    if (!is_dir($cache)) {
-        if (false === mkdir($cache, 0700, true)) {
+    // try to create else disable cache because app should still
+    // work so make an noop when check failed
+    if (!is_dir($cache) && false === mkdir($cache, 0700, true)) {
             $cache = false;
-        }
     }
-} else {
-    $cache = false;
 }
 
 $instance = new Environment(
@@ -27,16 +25,10 @@ $instance = new Environment(
         'strict_variables' => 1,
         'autoescape' => false,
         'auto_reload' => true,
-        'debug' => $this->get(OutputInterface::class)->isDebug(),
+        'debug' => $debug,
         'cache' => $cache,
     ]
 );
-
-foreach ($this->get(PluginRegistry::class) as $plugin) {
-    if ($plugin instanceof ExtensionInterface) {
-        $instance->addExtension($plugin);
-    }
-}
 
 $instance->addExtension($this->get(Extension::class));
 

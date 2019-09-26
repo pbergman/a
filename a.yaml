@@ -1,6 +1,6 @@
 plugins: ['env']
 
-shell: sh
+#shell: sh
 
 tasks:
   env.foo: echo "hello"

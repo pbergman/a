@@ -8,6 +8,8 @@ use App\Exception\PluginNotFoundException;
 use Composer\Autoload\ClassLoader;
 use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\Resource\FileResource;
+use Twig\Environment;
+use Twig\Extension\ExtensionInterface;
 
 class PluginRegistry implements \IteratorAggregate
 {
@@ -19,15 +21,18 @@ class PluginRegistry implements \IteratorAggregate
     private $loader;
     /** @var FileResource[] */
     private $resource = [];
+    /** @var Environment */
+    private $twig;
 
     /**
      * @param PluginFileLocator $locator
      * @param ClassLoader $loader
      */
-    public function __construct(PluginFileLocator $locator, ClassLoader $loader)
+    public function __construct(PluginFileLocator $locator, ClassLoader $loader, Environment $twig)
     {
         $this->loader = $loader;
         $this->locator = $locator;
+        $this->twig = $twig;
     }
 
     private function getPluginNsPrefix(string $name) :string
@@ -53,7 +58,11 @@ class PluginRegistry implements \IteratorAggregate
             $this->loader->addPsr4($prefix, $root);
             $className = $prefix . 'Plugin';
             if (class_exists($className) && is_a($className, PluginInterface::class, true)) {
-                $this->plugins[$name] = new $className();
+                $instance = new $className();
+                if ($instance instanceof ExtensionInterface) {
+                    $this->twig->addExtension($instance);
+                }
+                $this->plugins[$name] = $instance;
             }
             if (file_exists($file = $root . '/a.yaml')) {
                 $this->resource[$name] = new FileResource($file);

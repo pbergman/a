@@ -59,7 +59,7 @@ EOF
                 ->beforeNormalization()
                     ->ifString()
                     ->then(function($v) {
-                        return ['default' => $v, 'mode' => InputArgument::REQUIRED];
+                        return ['default' => $v, 'mode' => InputArgument::OPTIONAL];
                     })
                 ->end()
                 ->beforeNormalization()

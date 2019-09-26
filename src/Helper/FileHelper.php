@@ -47,6 +47,6 @@ class FileHelper
 
     public static function getCacheDir(string ...$suffix) :string
     {
-        return self::joinPath(self::getHomeDir(), '.config', 'a', 'cache', ...$suffix);
+        return self::joinPath(self::getHomeDir(), '.cache', ...$suffix);
     }
 }

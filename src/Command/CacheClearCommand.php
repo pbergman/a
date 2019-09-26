@@ -12,7 +12,9 @@ use Twig\Environment;
 
 class CacheClearCommand extends Command
 {
+    /** @var array|callable[]  */
     private $cache;
+
     protected static $defaultName = 'cache:clear';
 
     public function __construct(CacheInterface $cache, Environment $twig)
@@ -39,8 +41,7 @@ class CacheClearCommand extends Command
     {
         $this
             ->setDescription('Dump the merged config.')
-            ->addOption('pool', 'p', InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 'the pool to clear', ['twig', 'app'])
-        ;
+            ->addOption('pool', 'p', InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY, 'the pool to clear', ['twig', 'app']);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

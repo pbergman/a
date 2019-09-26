@@ -5,7 +5,7 @@ use App\Config\AppConfigFile;
 use App\Helper\FileHelper;
 use Symfony\Component\Console\Input\InputInterface;
 
-if (false !== $this->get(InputInterface::class)->getParameterOption(['--no-cache', '-N'], false, true)) {
+if ($this->get(InputInterface::class)->hasParameterOption(['--no-cache', '-N'], true)) {
     return new InMemoryCache();
 } else {
     return new FileSystemCache(FileHelper::getCacheDir('app', sha1((string)$this->get(AppConfigFile::class)->getAppConfigFile())));

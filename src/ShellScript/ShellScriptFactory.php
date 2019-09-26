@@ -3,7 +3,6 @@ namespace App\ShellScript;
 
 use App\Config\AppConfig;
 use Twig\Environment;
-use Twig\Extension\ProfilerExtension;
 
 class ShellScriptFactory implements ShellScriptFactoryInterface
 {
@@ -12,7 +11,7 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
     /** @var bool */
     private $debug;
 
-    public function __construct(Environment $twig, $debug = true)
+    public function __construct(Environment $twig, $debug = false)
     {
         $this->twig = $twig;
         $this->debug = $debug;

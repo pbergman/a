@@ -30,7 +30,7 @@ class BashScriptExec implements ExecInterface
         if (!is_resource($script)) {
             throw new InvalidArgumentException(sprintf('Script argument must be a valid resource type. %s given.' . gettype($script)));
         }
-        $proc = proc_open(sprintf('bash -xc \'source %s\'', $this->filepath()), $this->getDescriptors($script, $stdout, $stderr), $pipes);
+        $proc = proc_open(sprintf('bash -c \'source %s\'', $this->filepath()), $this->getDescriptors($script, $stdout, $stderr), $pipes);
         $stat = ['signaled' => false, 'stopped' => false, 'exitcode' => -1];
         if (is_resource($proc)) {
             while (true) {

@@ -18,9 +18,9 @@ class Container implements ContainerInterface
     }
 
     /** @inheritDoc\ */
-     public function get($id)
-     {
-        if (isset($this->registry[$id])) {
+    public function get($id)
+    {
+        if (array_key_exists($id, $this->registry)) {
             return $this->registry[$id];
         }
         $file = sprintf('./src/Container/%s.php', str_replace('\\', '', $id));
@@ -31,7 +31,7 @@ class Container implements ContainerInterface
             return $this->registry[$id];
         }
         return $this->registry[$id] = new $id();
-     }
+    }
 
     /** @inheritDoc\ */
     public function has($id)

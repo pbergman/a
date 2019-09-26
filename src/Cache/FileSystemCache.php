@@ -21,7 +21,7 @@ class FileSystemCache implements CacheInterface
         $key = sha1($key);
         $pre = substr($key, 0, 2);
         $key = substr($key, 2);
-        return [FileHelper::joinPath($this->base, $pre), $key];
+        return [FileHelper::joinPath($this->base, $pre), $key . '.php'];
     }
 
     /** @inheritDoc */
