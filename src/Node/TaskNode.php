@@ -33,6 +33,11 @@ class TaskNode
                     ->append((new PrePostNode())('pre'))
                     ->append((new PrePostNode())('post'))
                     ->arrayNode('exec')
+                        ->info(<<<EOF
+Similar to pre and post with the exception this won`t be merged and will be 
+overwritten and only accepts strings or array of strings as value.
+EOF
+                        )
                         ->performNoDeepMerging()
                         ->beforeNormalization()
                             ->ifString()

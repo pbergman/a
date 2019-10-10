@@ -45,8 +45,13 @@ class FileHelper
         return rtrim($home, DIRECTORY_SEPARATOR);
     }
 
+    public static function getConfigDir(string ...$suffix) :string
+    {
+        return self::joinPath(self::getHomeDir(), '.config/a', ...$suffix);
+    }
+
     public static function getCacheDir(string ...$suffix) :string
     {
-        return self::joinPath(self::getHomeDir(), '.cache', ...$suffix);
+        return self::joinPath(self::getHomeDir(), '.cache/a', ...$suffix);
     }
 }

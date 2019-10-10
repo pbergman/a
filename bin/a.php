@@ -1,11 +1,11 @@
 <?php
 
-use App\Container;
 use App\Application;
+use function App\Container;
 
-$loader = include_once dirname(__FILE__) . '/../vendor/autoload.php';
+include_once __DIR__ . '/../vendor/autoload.php';
 
-(new Container($loader))->get(Application::class)->run();
+(Container())->get(Application::class)->run();
 
 //// A_PLUGIN_PATH
 //$path = '/home/philip/workspace/php/lib/a-plugin/*/*:/home/philip/.config/composer/vendor/*/*';

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <defaults autowire="true" autoconfigure="true" public="false"/>
+        <prototype namespace="App\" resource="../src/*" exclude="../src/{Node,Model,Container,Container.php}"/>
+
+        <service id="App\Config\AppConfig">
+            <argument type="service" id="App\Config\AppConfigFile"/>
+        </service>
+
+        <service id="App\Config\AppConfigFile">
+            <argument type="service" id="Symfony\Component\Console\Input\InputInterface"/>
+        </service>
+
+        <service id="App\Plugin\PluginRegistry" public="true"/>
+        <service id="App\Plugin\PluginFileLocator">
+            <argument key="$pattern">%env(A_PLUGIN_PATH)%</argument>
+        </service>
+
+        <service id="App\Twig\Loader\ProcessSourceContextInterface" alias="App\Twig\Loader\ChainedProcessSourceContext"/>
+
+        <service id="Twig\Loader\LoaderInterface" alias="App\Twig\Loader\PluginLoader"/>
+        <service id="Twig\Environment">
+            <argument key="$options" type="collection"/>
+        </service>
+
+        <service id="Symfony\Component\Console\Input\ArgvInput"/>
+        <service id="Symfony\Component\Console\Input\InputInterface" alias="Symfony\Component\Console\Input\ArgvInput"/>
+    </services>
+</container>

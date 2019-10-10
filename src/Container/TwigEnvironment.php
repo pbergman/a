@@ -14,7 +14,7 @@ if (false !== $cache = !$input->hasParameterOption(['--no-cache', '-N'], true)) 
     $cache = FileHelper::getCacheDir('twig', sha1((string)$this->get(AppConfigFile::class)->getAppConfigFile()));
     // try to create else disable cache because app should still
     // work so make an noop when check failed
-    if (!is_dir($cache) && false === mkdir($cache, 0700, true)) {
+    if (!is_dir($cache) && !mkdir($cache, 0700, true) && !is_dir($cache)) {
             $cache = false;
     }
 }

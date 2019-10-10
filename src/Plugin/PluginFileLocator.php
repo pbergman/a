@@ -9,12 +9,12 @@ class PluginFileLocator extends FileLocator
 {
     public function __construct(string $pattern)
     {
-        $locations = [];
+        $ret = [];
 
         foreach (explode(PATH_SEPARATOR, $pattern) as $path) {
-            $locations = array_merge($locations, glob($path, GLOB_ONLYDIR|GLOB_BRACE));
+            $ret[] =  glob($path, GLOB_ONLYDIR|GLOB_BRACE);
         }
 
-        parent::__construct($locations);
+        parent::__construct(array_merge(...$ret));
     }
 }
