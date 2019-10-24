@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App\CommandLoader;
 
 use Psr\Container\ContainerInterface;
@@ -16,41 +18,35 @@ class ContainerCommandLoader implements CommandLoaderInterface
     public function __construct(ContainerInterface $container, string ...$commands)
     {
         $this->container = $container;
-        $this->commands = $commands;
+
+        foreach ($commands as $command) {
+            $this->commands[$command::getDefaultName()] = $command;
+        }
     }
 
     /** @inheritDoc */
-    public function get($name)
+    public function get($name) :Command
     {
-        foreach ($this->commands as $index => $command) {
-            if ($name === $command::getDefaultName()) {
-                if (is_string($command)) {
-                    $this->commands[$index] = $this->container->get($command);
-                }
-                return $this->commands[$index];
-            }
+        if (!$this->has($name)) {
+            throw new CommandNotFoundException(sprintf('Command "%s" does not exist.', $name));
         }
-        throw new CommandNotFoundException(sprintf('Command "%s" does not exist.', $name));
+
+        if (is_string($this->commands[$name])) {
+            $this->commands[$name] = $this->container->get($this->commands[$name]);
+        }
+
+        return $this->commands[$name];
     }
 
     /** @inheritDoc */
-    public function has($name)
+    public function has($name) :bool
     {
-        foreach ($this->commands as $command) {
-            if ($name === $command::getDefaultName()) {
-                return true;
-            }
-        }
-        return false;
+        return isset($this->commands[$name]);
     }
 
     /** @inheritDoc */
-    public function getNames()
+    public function getNames() :array
     {
-        $names = [];
-        foreach ($this->commands as $command) {
-            $names[] = $command::getDefaultName();
-        }
-        return $names;
+        return empty($this->commands) ? [] : array_keys($this->commands);
     }
 }

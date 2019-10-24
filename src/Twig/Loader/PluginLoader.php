@@ -3,37 +3,32 @@ declare(strict_types=1);
 
 namespace App\Twig\Loader;
 
-use App\Config\AppConfig;
 use App\Exception\PluginNotFoundException;
 use App\Exception\TaskNotExistException;
-use App\Plugin\PluginCacheInterface;
-use App\Plugin\PluginRegistry;
+use App\Plugin\PluginConfig;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
 use Twig\Source;
 
 final class PluginLoader implements LoaderInterface
 {
-    /** @var AppConfig  */
+    /** @var PluginConfig  */
     private $config;
-    /** @var PluginRegistry  */
-    private $registry;
     /** @var ProcessSourceContextInterface */
     private $processor;
 
-    public function __construct(AppConfig $config, PluginRegistry $registry, ProcessSourceContextInterface $processor)
+    public function __construct(PluginConfig $config, ProcessSourceContextInterface $processor)
     {
         $this->config = $config;
-        $this->registry = $registry;
         $this->processor = $processor;
     }
 
-    private function getCode(string $name) :?string
+    private function getCode(string $name, $raw = false) :?string
     {
         try {
             $ret = '';
-            foreach ($this->config->getCode($name) as $line) {
-                $ret .= $this->processor->process($line);
+            foreach ($this->config->getTask($name) as $line) {
+                $ret .= ($raw) ? $line : $this->processor->process($line);
             }
             return $ret;
         } catch (TaskNotExistException $e) {
@@ -50,7 +45,7 @@ final class PluginLoader implements LoaderInterface
     public function exists($name)
     {
         try {
-            $this->getCode((string) $name);
+            $this->getCode((string)$name, true);
             return true;
         } catch (LoaderError $e) {
             return false;
@@ -59,25 +54,28 @@ final class PluginLoader implements LoaderInterface
 
     public function getCacheKey($name)
     {
-        return $name . "::" . sha1($this->getCode((string)$name));
+        return $name . '::' . sha1($this->getCode((string)$name, true));
     }
 
     public function isFresh($name, $time)
     {
-        $this->getCode((string)$name);
-        $name = explode(':', $name)[0];
+        // @todo new implantation??
 
-        if (null !== $plugin = $this->registry->getPlugin($name)) {
-            if (($plugin instanceof PluginCacheInterface) && $plugin->isFresh($time)) {
-                return true;
-            }
-        }
+//        $this->getCode((string)$name);
+//        $name = explode(':', $name)[0];
+
+//        if (null !== $plugin = $this->registry->getPlugin($name)) {
+//            if (($plugin instanceof PluginCacheInterface) && $plugin->isFresh($time)) {
+//                return true;
+//            }
+//        }
 
         try {
             // Only check the a.yaml file from the plugin because only when this
             // changes the cache is invalid. When an Plugin file is changed the
             // cache should not be directly changed.
-            return $this->registry->getConfigResource($name)->isFresh($time);
+//            return $this->registry->getConfigResource($name)->isFresh($time);
+            return true;
         } catch (PluginNotFoundException $e) {
             return true;
         }

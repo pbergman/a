@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace App\CommandLoader;
 
-use App\Config\AppConfig;
 use App\CommandBuilder\CommandBuilderInterface;
+use App\Plugin\PluginConfig;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\CommandLoader\CommandLoaderInterface;
 
 class TasksCommandLoader implements CommandLoaderInterface
@@ -12,7 +13,7 @@ class TasksCommandLoader implements CommandLoaderInterface
     private $config;
     private $builder;
 
-    public function __construct(AppConfig $config, CommandBuilderInterface $builder)
+    public function __construct(PluginConfig $config, CommandBuilderInterface $builder)
     {
         $this->config = $config;
         $this->builder = $builder;
@@ -30,19 +31,19 @@ class TasksCommandLoader implements CommandLoaderInterface
     }
 
     /** @inheritDoc */
-    public function has($name)
+    public function has($name) :bool
     {
         return in_array($name, $this->getAvailableNames());
     }
 
     /** @inheritDoc */
-    public function getNames()
+    public function getNames() :array
     {
         return $this->getAvailableNames();
     }
 
     /** @inheritDoc */
-    public function get($name)
+    public function get($name) :Command
     {
         return $this->builder->getCommand($name);
     }

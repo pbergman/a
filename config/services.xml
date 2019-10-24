@@ -3,28 +3,34 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
 
+    <parameters>
+        <parameter key="cache.twig">%env(CACHE_TWIG)%</parameter>
+        <parameter key="cache">%env(CACHE)%</parameter>
+        <parameter key="debug">%env(DEBUG)%</parameter>
+    </parameters>
+    
     <services>
         <defaults autowire="true" autoconfigure="true" public="false"/>
         <prototype namespace="App\" resource="../src/*" exclude="../src/{Node,Model,Container,Container.php}"/>
 
-        <service id="App\Config\AppConfig">
-            <argument type="service" id="App\Config\AppConfigFile"/>
-        </service>
+        <instanceof id="Symfony\Component\Console\Command\Command" public="true">
+            <tag name="app.command"/>
+        </instanceof>
 
-        <service id="App\Config\AppConfigFile">
-            <argument type="service" id="Symfony\Component\Console\Input\InputInterface"/>
-        </service>
-
-        <service id="App\Plugin\PluginRegistry" public="true"/>
-        <service id="App\Plugin\PluginFileLocator">
-            <argument key="$pattern">%env(A_PLUGIN_PATH)%</argument>
-        </service>
+        <service id="App\CommandLoader\CommandLoader" public="true"/>
 
         <service id="App\Twig\Loader\ProcessSourceContextInterface" alias="App\Twig\Loader\ChainedProcessSourceContext"/>
 
         <service id="Twig\Loader\LoaderInterface" alias="App\Twig\Loader\PluginLoader"/>
+
         <service id="Twig\Environment">
-            <argument key="$options" type="collection"/>
+            <argument key="$options" type="collection">
+                <argument key="strict_variables">1</argument>
+                <argument key="autoescape">false</argument>
+                <argument key="auto_reload">true</argument>
+                <argument key="cache">%cache.twig%</argument>
+                <argument key="debug">%debug%</argument>
+            </argument>
         </service>
 
         <service id="Symfony\Component\Console\Input\ArgvInput"/>

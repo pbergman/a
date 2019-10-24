@@ -1,47 +1,21 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\Plugin;
 
 use App\Exception\TaskNotExistException;
 use App\Model\TaskEntry;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\Config\Definition\Processor;
 
-class AppConfig
+class PluginConfig
 {
-    /** @var ConfigResources */
-    private $resources;
-    /** @var Processor */
-    private $processor;
-    /** @var ConfigTreeBuilder */
-    private $builder;
     /** @var array */
     private $config;
-    /** @var CacheInterface  */
-    private $cache;
 
-    public function __construct(ConfigResources $resources, Processor $processor, ConfigTreeBuilder $builder, CacheInterface $cache)
+    public function __construct(array $config)
     {
-        $this->resources = $resources;
-        $this->processor = $processor;
-        $this->builder = $builder;
-        $this->cache = $cache;
-    }
-
-    private function getRawConfig() :array
-    {
-        return $this->resources->getConfigs();
-    }
-
-    private function initConfig()
-    {
-        if (null === $config = $this->cache->get('config')) {
-            $config = $this->normalizeConfig($this->processor->processConfiguration($this->builder, $this->getRawConfig()));
-            $this->cache->set('config', $config);
-        }
-
-        $this->config = $config;
+        $this->config = $this->normalizeConfig($config);
     }
 
     private function normalizeConfig(array $cnf) :array
@@ -84,30 +58,24 @@ class AppConfig
         );
     }
 
-    public function getConfig(string $name = null)
+    public function getAllConfig() :array
     {
-        if (null === $this->config) {
-            $this->initConfig();
-        }
-        return (is_null($name)) ? $this->config : (isset($this->config[$name]) ? $this->config[$name] : null);
+        return $this->config;
+    }
+
+    public function getConfig(string $name, $default = null)
+    {
+        return array_key_exists($name, $this->config) ? $this->config[$name] : $default;
     }
 
     public function getGlobals() :array
     {
-        if (null === $tasks = $this->getConfig('globals')) {
-            return [];
-        } else {
-            return $tasks;
-        }
+        return $this->getConfig('globals', []);
     }
 
     public function getTasks() :array
     {
-        if (null === $tasks = $this->getConfig('tasks')) {
-            return [];
-        } else {
-            return $tasks;
-        }
+        return $this->getConfig('tasks', []);
     }
 
     /**
@@ -116,8 +84,18 @@ class AppConfig
      */
     public function getMacros(string $task = null) :array
     {
-        $config = $this->getConfig();
-        return (null === $task) ? $config['macros'] : (isset($config['tasks'][$task]) ? $config['tasks'][$task]['macros'] : []);
+
+        if  (null === $task) {
+            return $this->getConfig('macros', []);
+        }
+
+        $tasks = $this->getTasks();
+
+        if (array_key_exists($task, $tasks)) {
+            return $tasks[$task]['macros'];
+        }
+
+        return [];
     }
 
     private function realName(string $name) :string
@@ -125,7 +103,7 @@ class AppConfig
         return str_replace('.', ':', $name);
     }
 
-    public function getCode(string $name) :array
+    public function getTask(string $name) :array
     {
         static $cache;
         $name = $this->realName($name);

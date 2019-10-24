@@ -17,7 +17,7 @@ class CacheClearCommand extends Command
 
     protected static $defaultName = 'cache:clear';
 
-    public function __construct(CacheInterface $cache, Environment $twig)
+    public function __construct(Environment $twig)
     {
         parent::__construct();
 
@@ -33,7 +33,7 @@ class CacheClearCommand extends Command
                     rmdir($conf);
                 }
             },
-            'app' => [$cache, 'clear']
+//            'app' => [$cache, 'clear']
         ];
     }
 

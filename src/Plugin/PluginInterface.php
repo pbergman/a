@@ -7,5 +7,5 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 
 interface PluginInterface
 {
-    public function appendConfiguration(ArrayNodeDefinition $rootNode) :void;
+    public static function appendConfiguration(ArrayNodeDefinition $rootNode) :void;
 }

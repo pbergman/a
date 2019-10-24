@@ -44,7 +44,9 @@ class CommandLoader implements CommandLoaderInterface
         $names = [];
 
         foreach ($this->loaders as $loader) {
-            $names = array_merge($names, $loader->getNames());
+            foreach($loader->getNames() as $name) {
+                $names[] = $name;
+            }
         }
 
         return $names;

@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\CommandBuilder;
 
-use App\Config\AppConfig;
 use App\Exec\ExecInterface;
+use App\Plugin\PluginConfig;
 use App\ShellScript\ShellScriptFactoryInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -13,14 +13,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class DynamicCommandBuilder implements CommandBuilderInterface
 {
-    /** @var AppConfig */
+    /** @var PluginConfig */
     private $cnf;
     /** @var ShellScriptFactoryInterface */
     private $ssf;
     /** @var ExecInterface */
     private $exec;
 
-    public function __construct(AppConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
+    public function __construct(PluginConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
     {
         $this->ssf = $ssf;
         $this->cnf = $cnf;
@@ -31,7 +31,7 @@ class DynamicCommandBuilder implements CommandBuilderInterface
     {
         return new class($name, $this->cnf,  $this->ssf, $this->exec) extends Command {
             private $cnf, $ssf, $exec;
-            public function __construct(string $name, AppConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
+            public function __construct(string $name, PluginConfig $cnf, ShellScriptFactoryInterface $ssf, ExecInterface $exec)
             {
                 $this->cnf = $cnf;
                 $this->ssf = $ssf;
@@ -41,6 +41,7 @@ class DynamicCommandBuilder implements CommandBuilderInterface
             protected function configure()
             {
                 $cnf = $this->cnf->getTasks()[$this->getName()];
+
                 if (!empty($cnf['help'])) {
                     $this->setHelp($cnf['help']);
                 }

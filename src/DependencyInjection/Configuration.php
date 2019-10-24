@@ -1,26 +1,28 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\DependencyInjection;
 
 use App\Node\GlobalsNode;
 use App\Node\MacroNode;
 use App\Node\ShellNode;
 use App\Node\TaskNode;
-use App\Plugin\PluginRegistry;
+use App\Plugin\PluginInterface;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class ConfigTreeBuilder implements ConfigurationInterface
+class Configuration implements ConfigurationInterface
 {
-    private $registry;
+    /** @var array|PluginInterface[]  */
+    private $plugins;
 
-    public function __construct(PluginRegistry $registry)
+    public function __construct(array $plugins)
     {
-        $this->registry = $registry;
+        $this->plugins = $plugins;
     }
 
-    public function getConfigTreeBuilder()
+
+    public function getConfigTreeBuilder() :TreeBuilder
     {
         $builder = new TreeBuilder('a');
         $root = $builder->getRootNode();
@@ -33,10 +35,11 @@ class ConfigTreeBuilder implements ConfigurationInterface
                 ->append((new TaskNode())())
             ->end();
 
-        foreach ($this->registry as $plugin) {
-            $plugin->appendConfiguration($root);
+        foreach ($this->plugins as $plugin) {
+            $plugin::appendConfiguration($root);
         }
 
         return $builder;
     }
+
 }
