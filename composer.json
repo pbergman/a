@@ -13,10 +13,7 @@
         "symfony/dependency-injection": "^4.3"
     },
     "autoload": {
-        "psr-4": { "App\\": "src/" },
-        "files": [
-            "src/Container.php"
-        ]
+        "psr-4": { "App\\": "src/" }
     },
     "autoload-dev": {
         "psr-4": { "App\\Tests\\": "tests/" }

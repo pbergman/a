@@ -18,10 +18,6 @@ class NodeVisitorContainer implements \IteratorAggregate
     public function getIterator()
     {
         foreach ($this->visitors as $visitor) {
-            if (is_callable($visitor)) {
-
-                $visitor = $visitor();
-            }
             if ($visitor instanceof NodeVisitorInterface) {
                 yield $visitor;
             }

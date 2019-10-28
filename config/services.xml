@@ -4,19 +4,28 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <parameters>
-        <parameter key="cache.twig">%env(CACHE_TWIG)%</parameter>
-        <parameter key="cache">%env(CACHE)%</parameter>
-        <parameter key="debug">%env(DEBUG)%</parameter>
+        <parameter key="A_CACHE_TWIG">false</parameter>
+        <parameter key="A_CACHE">false</parameter>
+        <parameter key="A_DEBUG">false</parameter>
     </parameters>
     
     <services>
         <defaults autowire="true" autoconfigure="true" public="false"/>
+
         <prototype namespace="App\" resource="../src/*" exclude="../src/{Node,Model,Container,Container.php}"/>
 
         <instanceof id="Symfony\Component\Console\Command\Command" public="true">
             <tag name="app.command"/>
         </instanceof>
 
+        <service id="App\Command\DebugConfigDumpReferenceCommand">
+            <argument key="$plugins">%a.plugins%</argument>
+        </service>
+
+        <service id="App\DependencyInjection\TypeFixEnvVarProcessor">
+            <tag name="container.env_var_processor"/>
+        </service>
+        
         <service id="App\CommandLoader\CommandLoader" public="true"/>
 
         <service id="App\Twig\Loader\ProcessSourceContextInterface" alias="App\Twig\Loader\ChainedProcessSourceContext"/>
@@ -28,8 +37,8 @@
                 <argument key="strict_variables">1</argument>
                 <argument key="autoescape">false</argument>
                 <argument key="auto_reload">true</argument>
-                <argument key="cache">%cache.twig%</argument>
-                <argument key="debug">%debug%</argument>
+                <argument key="cache">%env(empty_is_false:A_CACHE_TWIG)%</argument>
+                <argument key="debug">%env(bool:A_DEBUG)%</argument>
             </argument>
         </service>
 

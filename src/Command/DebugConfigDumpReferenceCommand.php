@@ -1,9 +1,7 @@
 <?php
 namespace App\Command;
 
-use App\Config\AppConfig;
-use App\Config\ConfigTreeBuilder;
-use App\Plugin\PluginRegistry;
+use App\DependencyInjection\Configuration;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Dumper\YamlReferenceDumper;
 use Symfony\Component\Console\Command\Command;
@@ -14,21 +12,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class DebugConfigDumpReferenceCommand extends Command
 {
-    /** @var AppConfig  */
-    private $config;
-    /** @var ConfigTreeBuilder */
-    private $builder;
-    /** @var PluginRegistry  */
-    private $registry;
+    /** @var array */
+    private $plugins;
 
     protected static $defaultName = 'debug:config:dump-reference';
 
-    public function __construct(AppConfig $config, ConfigTreeBuilder $builder, PluginRegistry $registry)
+    public function __construct(array $plugins)
     {
         parent::__construct();
-        $this->config = $config;
-        $this->builder = $builder;
-        $this->registry = $registry;
+        $this->plugins = $plugins;
     }
 
 
@@ -56,19 +48,30 @@ EOH
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $dumper = new YamlReferenceDumper();
+
         if (null !== $plugin = $input->getOption('plugin')) {
-            if (!$this->registry->isRegistered($plugin)) {
-                $this->registry->register($plugin);
+
+            if (isset($this->plugins[$plugin]) && in_array($plugin, $this->plugins)) {
+                throw new \InvalidArgumentException(sprintf('Plugin %s is not registered. Available plugins \'%s\'', $plugin, implode('\', \'', $plugin)));
             }
+
+            if (isset($this->plugins[$plugin])) {
+                $class = $this->plugins[$plugin];
+            } else {
+                $class = $plugin;
+            }
+
             $builder = new TreeBuilder($plugin);
             $root = $builder->getRootNode();
-            $this->registry->getPlugin($plugin)->appendConfiguration($root);
+            $class::appendConfiguration($root);
             $output->writeln($dumper->dumpNode($root->getNode(true)));
+
         } else {
-            if (null === $name = $input->getArgument('path')) {
-                $output->writeln($dumper->dump($this->builder));
+            $config = new Configuration($this->plugins);
+            if (null === $path = $input->getArgument('path')) {
+                $output->writeln($dumper->dump($config));
             } else {
-                $output->writeln($dumper->dumpAtPath($this->builder, $name));
+                $output->writeln($dumper->dumpAtPath($config, $path));
             }
         }
     }

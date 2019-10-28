@@ -1,8 +1,8 @@
 <?php
 namespace App\Command;
 
-use App\Config\AppConfig;
 use App\Model\TaskMeta;
+use App\Plugin\PluginConfig;
 use App\Twig\Loader\PluginLoader;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -11,14 +11,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class DebugPrintTemplatesCommand extends Command
 {
-    /** @var AppConfig  */
+    /** @var PluginConfig  */
     private $config;
     /** @var PluginLoader  */
     private $loader;
 
     protected static $defaultName = 'debug:print-templates';
 
-    public function __construct(AppConfig $config, PluginLoader $loader)
+    public function __construct(PluginConfig $config, PluginLoader $loader)
     {
         parent::__construct();
         $this->config = $config;

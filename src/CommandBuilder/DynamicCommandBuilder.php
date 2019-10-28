@@ -61,12 +61,15 @@ class DynamicCommandBuilder implements CommandBuilderInterface
             }
             protected function execute(InputInterface $input, OutputInterface $output)
             {
+
+                $cxt = ['input' => $input, 'output' => $output];
+
                 if ($input->getOption('dump')) {
-                    $this->ssf->create(STDOUT, $this->getName(), $this->cnf, ['input' => $input]);
+                    $this->ssf->create(STDOUT, $this->getName(), $this->cnf, $cxt);
                 } else {
                     try {
-                        $script = fopen('php://temp', 'w+');
-                        $this->ssf->create($script, $this->getName(), $this->cnf, ['input' => $input]);
+                        $script = fopen('php://temp', 'wb+');
+                        $this->ssf->create($script, $this->getName(), $this->cnf, $cxt);
                         return $this->exec->exec($script);
                     } finally {
                         fclose($script);

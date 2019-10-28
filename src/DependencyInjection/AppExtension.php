@@ -13,7 +13,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
-use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\Yaml\Parser;
 use Twig\Extension\ExtensionInterface;
 
@@ -21,11 +20,13 @@ class AppExtension extends Extension
 {
     private $loader;
     private $parser;
+    private $plugins;
 
-    public function __construct(ClassLoader $loader, Parser $parser)
+    public function __construct(ClassLoader $loader, Parser $parser, array $plugins)
     {
         $this->loader = $loader;
         $this->parser = $parser;
+        $this->plugins = $plugins;
     }
 
     public function load(array $configs, ContainerBuilder $container)
@@ -57,21 +58,23 @@ class AppExtension extends Extension
     private function getPluginFileLocator() :FileLocator
     {
         $locations = [];
+
         foreach (explode(PATH_SEPARATOR, (string)getenv('A_PLUGIN_PATH')) as $path) {
             $locations[] = glob($path, GLOB_ONLYDIR|GLOB_BRACE);
         }
+
         return new FileLocator(array_merge(...$locations));
     }
 
     private function initPlugins(ContainerBuilder $container, &$configs) :array
     {
         $locator = $this->getPluginFileLocator();
-        $locations = [];
-        $classes = [];
-        foreach ($container->getParameter('a.plugins') as $plugin) {
-            $classes[] = $this->registerPlugin($plugin, $container, $locator, $locations, $configs);
+        $locations = $classes = [];
+        foreach ($this->plugins as $plugin) {
+            $classes[$plugin] = $this->registerPlugin($plugin, $container, $locator, $locations, $configs);
         }
         $container->setParameter('a.plugin_location', $locations);
+        $container->setParameter('a.plugins', $classes);
         return $classes;
     }
 
@@ -86,11 +89,23 @@ class AppExtension extends Extension
                 $definition = new Definition($className);
                 $definition->setAutowired(true);
                 $definition->addTag('a.plugin', ['name' => $name]);
+                $definition->setPublic(true);
                 if (is_a($className, ExtensionInterface::class, true)) {
                     $definition->addTag('twig.extension');
                 }
                 $container->setDefinition($className, $definition);
                 $locations[$name] = [$root, $ns];
+// @todo decide to move Extension to separated class
+//
+//                // add support for PluginExtension class
+//                // that extents AbstractExtension
+//                $extensionName =
+//                if (class_exists($className . 'Extension') && is_a($className . 'Extension', ExtensionInterface::class, true)) {
+//
+//                    $definition = new Definition($className . 'Extension');
+//                    $definition->setAutowired(true);
+//                    $definition->addTag('twig.extension');
+//                }
             }
             if (file_exists($file = $root . '/a.yaml')) {
                 $configs[$name] = $this->parser->parseFile($file);

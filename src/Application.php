@@ -6,6 +6,7 @@ namespace App;
 use App\CommandLoader\CommandLoader;
 use App\DependencyInjection\AppExtension;
 use App\DependencyInjection\CompilerPass\CommandLoaderPass;
+use App\DependencyInjection\CompilerPass\NodeVisitorContainerPass;
 use App\DependencyInjection\CompilerPass\TwigCompilerPass;
 use App\DependencyInjection\Dumper\PhpDumper;
 use App\Exception\RuntimeException;
@@ -18,6 +19,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Compiler\RegisterEnvVarProcessorsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Yaml\Parser;
 
@@ -108,10 +110,11 @@ EOV
     private function setEnvs(bool $isCache, bool $isDebug, string $hash)
     {
         $params = [
-            'CACHE_TWIG' => $this->geTwigCache($isCache, $hash),
-            'CACHE' => $isCache,
-            'DEBUG' => $isDebug,
+            'A_CACHE_TWIG' => $this->geTwigCache($isCache, $hash),
+            'A_CACHE' => $isCache,
+            'A_DEBUG' => $isDebug,
         ];
+
         foreach ($params as $key => $value) {
             if (false === array_key_exists($key, $_ENV)) {
                 $_ENV[$key] = $value;
@@ -144,22 +147,25 @@ EOV
             $config = $parser->parseFile($file);
 
             if (isset($config['plugins'])) {
-                $container->setParameter('a.plugins', $config['plugins']);
+                $plugins = $config['plugins'];
+//                $container->setParameter('a.plugins', $config['plugins']);
                 unset($config['plugins']);
             }
 
-            $extension = new AppExtension($this->loader, $parser);
+            $extension = new AppExtension($this->loader, $parser, $plugins);
+            $container->addCompilerPass(new RegisterEnvVarProcessorsPass());
             $container->addCompilerPass(new CommandLoaderPass());
             $container->addCompilerPass(new TwigCompilerPass());
+            $container->addCompilerPass(new NodeVisitorContainerPass());
             $container->registerExtension($extension);
             $container->loadFromExtension($extension->getAlias());
             $container->prependExtensionConfig($extension->getAlias(), $config);
 
-//            if (false === $isCache) {
-//                $container
-//                    ->getDefinition(Environment::class)
-//                    ->
-//            }
+            if (false === $isCache) {
+                $container->compile(true);
+                $this->container = $container;
+                return;
+            }
 
             $container->compile();
 
@@ -167,13 +173,10 @@ EOV
                 $dumper = new PhpDumper($container);
                 file_put_contents($cacheContainer, $dumper->dump(['class' => 'AppContainer']));
             }
-
-        } else {
-            require_once $cacheContainer;
-            $container = new \AppContainer($this->loader);
         }
 
-        $this->container = $container;
+        require_once $cacheContainer;
+        $this->container = new \AppContainer($this->loader);
     }
 
     private function geTwigCache($cache, string $hash)

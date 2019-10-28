@@ -81,13 +81,16 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
         if (!isset($matches['args'])) {
             throw new LoaderError('Missing required argument for include tag with: ' . $matches[0]);
         }
+
         $args = $this->parseArgs($matches['args']);
         $incl = '{% ' . $matches['tag'] . ' ' ;
+
         if (count($args) > 1) {
             $incl .= sprintf('[\'%s\'] %%}', implode('\', \'', $args));
         } else {
             $incl .= '\'' . $args[0] . '\' %}';
         }
+
         return $incl;
     }
 
@@ -96,6 +99,7 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
         if (empty($matches['args'])) {
             $matches['args'] = '';
         }
+
         return '{% verbatim %}' . $matches['args'] . '{% endverbatim %}';
     }
 
@@ -110,6 +114,7 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
     private function parseArgs(string $args) :array
     {
         $ret = [];
+
         foreach (array_map('trim', array_filter(explode(',', $args))) as $arg) {
             $ret[] = $this->unquote($arg);
         }

@@ -75,7 +75,7 @@ final class PluginLoader implements LoaderInterface
             // changes the cache is invalid. When an Plugin file is changed the
             // cache should not be directly changed.
 //            return $this->registry->getConfigResource($name)->isFresh($time);
-            return true;
+            return false;
         } catch (PluginNotFoundException $e) {
             return true;
         }

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Twig\NodeVisitor;
 
-use App\Config\AppConfig;
+use App\Plugin\PluginConfig;
 use Twig\Environment;
 use Twig\Node\ModuleNode;
 use Twig\Node\Node;
@@ -15,7 +15,7 @@ class MacroNodeVisitor extends AbstractNodeVisitor
     private $config;
     private $enabled = true;
 
-    public function __construct(AppConfig $config)
+    public function __construct(PluginConfig $config)
     {
         $this->config = $config;
     }
@@ -29,7 +29,7 @@ class MacroNodeVisitor extends AbstractNodeVisitor
             $macros[] = $twig->parse($stream)->getNode('macros');
         }
 
-        foreach ($this->config->getMacros($name) as $macro) {
+        foreach ($this->config->getMacros($name) as $key => $macro) {
             $stream = $twig->tokenize(new Source($macro,  'macro[' . $name . '::' .$key . ']'));
             $macros[] = $twig->parse($stream)->getNode('macros');
         }
