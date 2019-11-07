@@ -12,7 +12,7 @@ use App\DependencyInjection\Dumper\PhpDumper;
 use App\Exception\RuntimeException;
 use App\Helper\FileHelper;
 use Composer\Autoload\ClassLoader;
-use Psr\Container\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
@@ -26,22 +26,15 @@ use Symfony\Component\Yaml\Parser;
 
 class Application extends BaseApplication
 {
-//    /** @var InputInterface  */
-//    private $input;
-//    /** @var OutputInterface  */
-//    private $output;
-//    /** @var AppConfig */
-//    private $config;
-//    /** @var AppConfigFile  */
-//    private $configFile;
-
     /** @var ClassLoader */
     private $loader;
     /** @var ContainerInterface */
     private $container;
+    /** @var array  */
+    private $envKeysSet = [];
+
 
     public function __construct(ClassLoader $loader)
-//    public function __construct(CommandLoader $loader, AppConfig $config, InputInterface $input, OutputInterface $output, AppConfigFile $configFile)
     {
         parent::__construct(<<<EOV
          ___     
@@ -59,15 +52,12 @@ EOV
 , '0.0.1');
 
         $this->loader = $loader;
-
-//        $this->setCommandLoader($loader);
-//
-//        $this->configFile = $configFile;
-//        $this->config = $config;
-//        $this->input = $input;
-//        $this->output = $output;
     }
 
+    public function getSetEnvKeys() :array
+    {
+        return $this->envKeysSet;
+    }
 
     public function run(InputInterface $input = null, OutputInterface $output = null)
     {
@@ -114,10 +104,10 @@ EOV
             'A_CACHE' => $isCache,
             'A_DEBUG' => $isDebug,
         ];
-
         foreach ($params as $key => $value) {
-            if (false === array_key_exists($key, $_ENV)) {
-                $_ENV[$key] = $value;
+            if (false === getenv($key)) {
+                putenv($key. '='. $value);
+                $this->envKeysSet[] = $key;
             }
         }
     }
@@ -148,7 +138,6 @@ EOV
 
             if (isset($config['plugins'])) {
                 $plugins = $config['plugins'];
-//                $container->setParameter('a.plugins', $config['plugins']);
                 unset($config['plugins']);
             }
 
