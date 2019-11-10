@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App\Exception;
 
 class TaskNotExistException extends \RuntimeException implements AExceptionInterface

@@ -23,9 +23,10 @@ use Symfony\Component\DependencyInjection\Compiler\RegisterEnvVarProcessorsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\Yaml\Parser;
 
-
 class Application extends BaseApplication
 {
+    const A_CONFIG_FILE = 'A_CONFIG_FILE';
+
     /** @var ClassLoader */
     private $loader;
     /** @var ContainerInterface */
@@ -94,7 +95,9 @@ EOV
 
     private function getConfigFile(InputInterface $input) :string
     {
-        return $input->getParameterOption(['--config', '-c'], $this->getDefaultConfigFile(), true);
+        $file = $input->getParameterOption(['--config', '-c'], $this->getDefaultConfigFile(), true);
+        putenv(self::A_CONFIG_FILE . '='. $file);
+        return $file;
     }
 
     private function setEnvs(bool $isCache, bool $isDebug, string $hash)

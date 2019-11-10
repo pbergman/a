@@ -5,8 +5,6 @@ namespace App\Plugin;
 
 use App\Exception\TaskNotExistException;
 use App\Model\TaskEntry;
-use Psr\SimpleCache\CacheInterface;
-use Symfony\Component\Config\Definition\Processor;
 
 class PluginConfig
 {
@@ -21,17 +19,9 @@ class PluginConfig
     private function normalizeConfig(array $cnf) :array
     {
         foreach ($cnf['tasks'] as $name => $task) {
-
-            $real = $this->realName($name);
-
-            if ($real !== $name) {
-                $cnf['tasks'][$real] = $task;
-                unset($cnf['tasks'][$name]);
-            }
-
             foreach (['pre', 'post', 'exec'] as $section) {
-                foreach ($cnf['tasks'][$real][$section] as $index => $line) {
-                    $cnf['tasks'][$real][$section][$index] = $this->newTaskEntry($line);
+                foreach ($cnf['tasks'][$name][$section] as $index => $line) {
+                    $cnf['tasks'][$name][$section][$index] = $this->newTaskEntry($line);
                 }
             }
         }
@@ -98,15 +88,9 @@ class PluginConfig
         return [];
     }
 
-    private function realName(string $name) :string
-    {
-        return str_replace('.', ':', $name);
-    }
-
-    public function getTask(string $name) :array
+    public function getTaskCode(string $name) :array
     {
         static $cache;
-        $name = $this->realName($name);
         if (!$cache || false === array_key_exists($name, $cache)) {
             $parts = explode('::', $name, 2);
             $index = null;
@@ -120,7 +104,7 @@ class PluginConfig
                 case 1:
                     foreach(['pre', 'exec', 'post'] as $section) {
                         for ($i = 0, $c =\count($tasks[$parts[0]][$section]); $i < $c; $i++) {
-                            $tmpl[] = sprintf("include(%s::%s[%d])\n", $parts[0], $section, $i);
+                            $tmpl[] = sprintf("@include(%s::%s[%d])\n", $parts[0], $section, $i);
                         }
                     }
                     break;

@@ -48,24 +48,19 @@ EOH
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $dumper = new YamlReferenceDumper();
-
         if (null !== $plugin = $input->getOption('plugin')) {
-
             if (isset($this->plugins[$plugin]) && in_array($plugin, $this->plugins)) {
                 throw new \InvalidArgumentException(sprintf('Plugin %s is not registered. Available plugins \'%s\'', $plugin, implode('\', \'', $plugin)));
             }
-
             if (isset($this->plugins[$plugin])) {
                 $class = $this->plugins[$plugin];
             } else {
                 $class = $plugin;
             }
-
             $builder = new TreeBuilder($plugin);
             $root = $builder->getRootNode();
             $class::appendConfiguration($root);
             $output->writeln($dumper->dumpNode($root->getNode(true)));
-
         } else {
             $config = new Configuration($this->plugins);
             if (null === $path = $input->getArgument('path')) {

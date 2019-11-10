@@ -22,6 +22,14 @@
             <argument key="$plugins">%a.plugins%</argument>
         </service>
 
+        <service id="App\ShellScript\ShellScriptFactory">
+            <argument key="$debug">%env(bool:A_DEBUG)%</argument>
+        </service>
+
+        <service id="App\Twig\Loader\PluginLoader">
+            <argument type="tagged" tag="a.plugin_cache" key="$plugins" index-by="name"/>
+        </service>
+
         <service id="App\DependencyInjection\TypeFixEnvVarProcessor">
             <tag name="container.env_var_processor"/>
         </service>

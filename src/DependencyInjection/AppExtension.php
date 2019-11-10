@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\DependencyInjection;
 
 use App\Exception\PluginNotFoundException;
+use App\Plugin\PluginCacheInterface;
 use App\Plugin\PluginConfig;
 use App\Plugin\PluginInterface;
 use Composer\Autoload\ClassLoader;
@@ -93,19 +94,11 @@ class AppExtension extends Extension
                 if (is_a($className, ExtensionInterface::class, true)) {
                     $definition->addTag('twig.extension');
                 }
+                if (is_a($className, PluginCacheInterface::class, true)) {
+                    $definition->addTag('a.plugin_cache',  ['name' => $name]);
+                }
                 $container->setDefinition($className, $definition);
                 $locations[$name] = [$root, $ns];
-// @todo decide to move Extension to separated class
-//
-//                // add support for PluginExtension class
-//                // that extents AbstractExtension
-//                $extensionName =
-//                if (class_exists($className . 'Extension') && is_a($className . 'Extension', ExtensionInterface::class, true)) {
-//
-//                    $definition = new Definition($className . 'Extension');
-//                    $definition->setAutowired(true);
-//                    $definition->addTag('twig.extension');
-//                }
             }
             if (file_exists($file = $root . '/a.yaml')) {
                 $configs[$name] = $this->parser->parseFile($file);

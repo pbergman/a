@@ -13,6 +13,22 @@ class TaskNode
         $node = new ArrayNodeDefinition('tasks');
         $node
             ->useAttributeAsKey('name')
+            ->beforeNormalization()
+                ->always(function($values) {
+                    $ret = [];
+
+                    foreach ($values as $key => $value) {
+                        if (false !== strpos($key, '.') && false === strpos($key, ':')) {
+                            $key = str_replace('.', ':', $key);
+                        }
+
+                        $ret[$key] = $value;
+                    }
+
+                    return $ret;
+                })
+            ->end()
+            ->normalizeKeys(false)
             ->arrayPrototype()
                 ->beforeNormalization()
                     ->ifTrue(function($v){

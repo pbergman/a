@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\EnvVarProcessorInterface;
-use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 
 class TypeFixEnvVarProcessor implements EnvVarProcessorInterface
 {
@@ -18,8 +17,6 @@ class TypeFixEnvVarProcessor implements EnvVarProcessorInterface
     /** @inheritDoc */
     public static function getProvidedTypes()
     {
-
-//        'array', 'bool', 'float', 'int', 'string'
 
         return [
             'empty_is_false' => 'bool|string'

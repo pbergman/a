@@ -10,9 +10,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class CacheClearCommand extends Command
 {
-    /** @var array|callable[]  */
-    private $cache;
-
     protected static $defaultName = 'cache:clear';
 
     protected function configure()
@@ -22,13 +19,18 @@ class CacheClearCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $isVerbose = $output->isVerbose();
         foreach ($this->getAllFiles(FileHelper::getCacheDir()) as $file) {
-            $output->writeln('> rm ' . $file);
+            if ($isVerbose) {
+                $output->writeln('> rm ' . $file);
+            }
             unlink($file);
         }
 
         foreach ($this->getDirectories(FileHelper::getCacheDir()) as $file) {
-            $output->writeln('> rmdir ' . $file);
+            if ($isVerbose) {
+                $output->writeln('> rmdir ' . $file);
+            }
             rmdir($file);
         }
     }

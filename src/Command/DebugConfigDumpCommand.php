@@ -30,7 +30,6 @@ class DebugConfigDumpCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $config = $this->config->getAllConfig();
-
         foreach ($config['tasks'] as &$task) {
             foreach (['pre','post','exec'] as $leave) {
                 foreach ($task[$leave] as $index => $value) {
@@ -38,7 +37,6 @@ class DebugConfigDumpCommand extends Command
                 }
             }
         }
-
         $output->writeln(Yaml::dump($config, 10));
     }
 }

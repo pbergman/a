@@ -8,6 +8,7 @@ use App\Twig\NodeVisitor\NodeVisitorContainer;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\GlobalsInterface;
 use Twig\NodeVisitor\NodeVisitorInterface;
+use Twig\TwigFunction;
 
 class Extension extends AbstractExtension implements GlobalsInterface
 {
@@ -31,5 +32,34 @@ class Extension extends AbstractExtension implements GlobalsInterface
     public function getGlobals()
     {
         return $this->config->getConfig('globals');
+    }
+
+    /**
+     * Returns a list of functions to add to the existing list.
+     *
+     * @return TwigFunction[]
+     */
+    public function getFunctions()
+    {
+        return [
+            new TwigFunction(
+                'arg',
+                function($context, $key) {
+                    return $context['input']->getArgument($key);
+                },
+                [
+                    'needs_context' => true,
+                ]
+            ),
+            new TwigFunction(
+                'opt',
+                function($context, $key) {
+                    return $context['input']->getOption($key);
+                },
+                [
+                    'needs_context' => true,
+                ]
+            ),
+        ];
     }
 }
