@@ -17,13 +17,12 @@ class ChainedProcessSourceContext implements ProcessSourceContextInterface
 
     public function process(string $context) :string
     {
-        $ctx = '';
 
         foreach ($this->processors as $processor) {
-            $ctx .= $processor->process($context);
+            $context = $processor->process($context);
         }
 
-        return $ctx;
+        return $context;
     }
 
     /**
