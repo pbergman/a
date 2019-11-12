@@ -11,7 +11,7 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
     public function process(string $context): string
     {
         return preg_replace_callback(
-            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>.*)?\)/ms',
+            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>[^\)]+)?\)/ms',
             function($m) {
                 switch ($m['tag']) {
                     // https://twig.symfony.com/doc/2.x/tags/verbatim.html
