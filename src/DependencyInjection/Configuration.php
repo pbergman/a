@@ -21,7 +21,6 @@ class Configuration implements ConfigurationInterface
         $this->plugins = $plugins;
     }
 
-
     public function getConfigTreeBuilder() :TreeBuilder
     {
         $builder = new TreeBuilder('a');

@@ -17,10 +17,12 @@ class DebugConfigDumpReferenceCommand extends Command
 
     protected static $defaultName = 'debug:config:dump-reference';
 
-    public function __construct(array $plugins)
+    public function __construct(iterable $plugins)
     {
         parent::__construct();
-        $this->plugins = $plugins;
+        foreach ($plugins as $plugin) {
+            $this->plugins[] = get_class($plugin);
+        }
     }
 
 

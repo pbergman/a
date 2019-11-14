@@ -23,8 +23,8 @@ class PhpDumper extends BaseDumper
                     $ret .= substr($m[1], 1, $eoc-1);
                     $ret .= <<<'EOF'
 
-        foreach($this->parameters['a.plugin_location'] as [$root, $ns]) {
-            $loader->addPsr4($ns, $root);
+        foreach($this->parameters['a.plugins'] as $info) {
+            $loader->addPsr4($info['namespace'], $info['location']);
         }
     
 EOF;

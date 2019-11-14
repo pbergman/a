@@ -3,45 +3,51 @@ declare(strict_types=1);
 
 namespace App\DependencyInjection;
 
-use App\Exception\PluginNotFoundException;
-use App\Plugin\PluginCacheInterface;
+use App\Exception\ConfigException;
+use App\Helper\FileHelper;
 use App\Plugin\PluginConfig;
 use App\Plugin\PluginInterface;
 use Composer\Autoload\ClassLoader;
-use Symfony\Component\Config\Exception\FileLocatorFileNotFoundException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\Yaml\Parser;
-use Twig\Extension\ExtensionInterface;
 
 class AppExtension extends Extension
 {
+    /** @var ClassLoader  */
     private $loader;
+    /** @var Parser  */
     private $parser;
+    /** @var array  */
     private $plugins;
+    /** @var string  */
+    private $base;
 
-    public function __construct(ClassLoader $loader, Parser $parser, array $plugins)
+    public function __construct(ClassLoader $loader, Parser $parser, array $plugins, string $base)
     {
         $this->loader = $loader;
         $this->parser = $parser;
         $this->plugins = $plugins;
+        $this->base = $base;
     }
 
     public function load(array $configs, ContainerBuilder $container)
     {
-        $plugins = $this->initPlugins($container, $configs);
-        $configuration = new Configuration($plugins);
-
-        foreach($configs as $name => $cnf) {
-            $configs[$name] = $this->processConfig((string)$name, $cnf);
+        if (false === is_file($file = FileHelper::joinPath($this->base, 'services.xml'))) {
+            $xml = new \DOMDocument('1.0', 'UTF-8');
+            $xml->preserveWhiteSpace = false;
+            $xml->formatOutput = true;
+            $xml->load(dirname(__DIR__, 2) . '/config/services.xml');
+            $plugins = $this->initPlugins($container, $configs, $xml);
+            $xml->save($file);
+        } else {
+            $plugins = $this->initPlugins($container, $configs);
         }
 
-        $config = $this->processConfiguration($configuration, $configs);
-
-        $loader = new XmlFileLoader($container, new FileLocator(dirname(__DIR__, 2) . '/config'));
+        $config = $this->getConfig($plugins, $configs);
+        $loader = new XmlFileLoader($container, new FileLocator($this->base));
         $loader->load('services.xml');
 
         $container->setParameter('a.config', $config);
@@ -49,6 +55,17 @@ class AppExtension extends Extension
             ->getDefinition(PluginConfig::class)
             ->setArgument(0, '%a.config%');
 
+    }
+
+    private function getConfig(array $plugins, array $configs) :array
+    {
+        $configuration = new Configuration($plugins);
+
+        foreach($configs as $name => $cnf) {
+            $configs[$name] = $this->processConfig((string)$name, $cnf);
+        }
+
+        return $this->processConfiguration($configuration, $configs);
     }
 
     private function getPluginFQNS(string $name) :string
@@ -67,46 +84,59 @@ class AppExtension extends Extension
         return new FileLocator(array_merge(...$locations));
     }
 
-    private function initPlugins(ContainerBuilder $container, &$configs) :array
+    private function initPlugins(ContainerBuilder $container, &$configs, \DOMDocument $xml = null) :array
     {
         $locator = $this->getPluginFileLocator();
-        $locations = $classes = [];
-        foreach ($this->plugins as $plugin) {
-            $classes[$plugin] = $this->registerPlugin($plugin, $container, $locator, $locations, $configs);
-        }
-        $container->setParameter('a.plugin_location', $locations);
-        $container->setParameter('a.plugins', $classes);
-        return $classes;
-    }
+        $plugins = $extensions = [];
 
-    private function registerPlugin(string $name, ContainerBuilder $container, FileLocator $locator, &$locations, &$configs) :string
-    {
-        $ns = $this->getPluginFQNS($name);
-        try {
-            $root = $locator->locate($name);
-            $className = $ns . 'Plugin';
-            $this->loader->addPsr4($ns, $root);
-            if (class_exists($className) && is_a($className, PluginInterface::class, true)) {
-                $definition = new Definition($className);
-                $definition->setAutowired(true);
-                $definition->addTag('a.plugin', ['name' => $name]);
-                $definition->setPublic(true);
-                if (is_a($className, ExtensionInterface::class, true)) {
-                    $definition->addTag('twig.extension');
-                }
-                if (is_a($className, PluginCacheInterface::class, true)) {
-                    $definition->addTag('a.plugin_cache',  ['name' => $name]);
-                }
-                $container->setDefinition($className, $definition);
-                $locations[$name] = [$root, $ns];
+        if (null !== $xml){
+            if (null === $element = $xml->getElementsByTagName('prototype')->item(0)) {
+                throw new ConfigException('invalid service template, could not find prototype element');
             }
-            if (file_exists($file = $root . '/a.yaml')) {
-                $configs[$name] = $this->parser->parseFile($file);
+            foreach ($element->attributes as $attribute) {
+                if (('resource' === $attribute->name || 'exclude' === $attribute->name) && 0 === strpos($attribute->value, '..')) {
+                    $attribute->value = str_replace('..', dirname(__DIR__, 2), $attribute->value);
+                }
             }
-            return $className;
-        } catch (FileLocatorFileNotFoundException $e) {
-            throw new PluginNotFoundException($name, $e->getPaths(), $e->getCode(), $e);
         }
+
+        foreach ($this->plugins as $plugin) {
+            $location = $locator->locate($plugin);
+            $namespace = $this->getPluginFQNS($plugin);
+            $this->loader->addPsr4($namespace, $location);
+            $extension = $namespace . 'Plugin';
+
+            if (class_exists($extension) && is_a($extension, PluginInterface::class, true)) {
+                $extensions[] = $extension;
+            } else {
+                $extension = null;
+            }
+
+            if (file_exists($file = $location . '/a.yaml')) {
+                $configs[$plugin] = $this->parser->parseFile($file);
+            }
+
+            if (null !== $xml) {
+                $attribute = $xml->createElement('prototype');
+                $attribute->setAttribute('namespace', $namespace);
+                $attribute->setAttribute('resource', $location . '/*');
+
+                if (null !== $service = $xml->getElementsByTagName('services')->item(0)) {
+                    $service->insertBefore($attribute, $element->nextSibling);
+                } else {
+                    throw new ConfigException('invalid service template, could not find services element');
+                }
+            }
+
+            $plugins[$plugin] = [
+                'location' => $location,
+                'namespace' => $namespace,
+                'extension' => $extension,
+            ];
+        }
+
+        $container->setParameter('a.plugins', $plugins);
+        return $extensions;
     }
 
     private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :string

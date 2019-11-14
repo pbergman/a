@@ -42,6 +42,10 @@ class Extension extends AbstractExtension implements GlobalsInterface
     public function getFunctions()
     {
         return [
+            new TwigFunction('filepath_join', 'App\\Helper\\FileHelper::joinPath'),
+            new TwigFunction('cwd', 'getcwd'),
+            new TwigFunction('is_dir', 'is_dir'),
+            new TwigFunction('is_file', 'is_file'),
             new TwigFunction(
                 'arg',
                 function($context, $key) {

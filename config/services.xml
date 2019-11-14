@@ -11,35 +11,34 @@
     
     <services>
         <defaults autowire="true" autoconfigure="true" public="false"/>
-
         <prototype namespace="App\" resource="../src/*" exclude="../src/{Node,Model,Container,Container.php}"/>
+
+        <instanceof id="App\Plugin\PluginInterface">
+            <tag name="app.plugin"/>
+        </instanceof>
+        <service id="App\Command\DebugConfigDumpReferenceCommand">
+            <argument type="tagged" tag="app.plugin" key="$plugins"/>
+        </service>
+        <service id="App\ShellScript\ShellScriptFactory">
+            <argument key="$debug">%env(bool:A_DEBUG)%</argument>
+        </service>
+        <service id="App\Twig\Loader\PluginLoader">
+            <argument type="tagged" tag="a.plugin_cache" key="$plugins" index-by="name"/>
+        </service>
+        <service id="App\DependencyInjection\TypeFixEnvVarProcessor">
+            <tag name="container.env_var_processor"/>
+        </service>
+        <service id="App\CommandLoader\CommandLoader" public="true"/>
+        <service id="App\Twig\Loader\ProcessSourceContextInterface" alias="App\Twig\Loader\ChainedProcessSourceContext"/>
 
         <instanceof id="Symfony\Component\Console\Command\Command" public="true">
             <tag name="app.command"/>
         </instanceof>
 
-        <service id="App\Command\DebugConfigDumpReferenceCommand">
-            <argument key="$plugins">%a.plugins%</argument>
-        </service>
-
-        <service id="App\ShellScript\ShellScriptFactory">
-            <argument key="$debug">%env(bool:A_DEBUG)%</argument>
-        </service>
-
-        <service id="App\Twig\Loader\PluginLoader">
-            <argument type="tagged" tag="a.plugin_cache" key="$plugins" index-by="name"/>
-        </service>
-
-        <service id="App\DependencyInjection\TypeFixEnvVarProcessor">
-            <tag name="container.env_var_processor"/>
-        </service>
-        
-        <service id="App\CommandLoader\CommandLoader" public="true"/>
-
-        <service id="App\Twig\Loader\ProcessSourceContextInterface" alias="App\Twig\Loader\ChainedProcessSourceContext"/>
-
+        <instanceof id="Twig\Extension\ExtensionInterface">
+            <tag name="twig.extension"/>
+        </instanceof>
         <service id="Twig\Loader\LoaderInterface" alias="App\Twig\Loader\PluginLoader"/>
-
         <service id="Twig\Environment">
             <argument key="$options" type="collection">
                 <argument key="strict_variables">1</argument>

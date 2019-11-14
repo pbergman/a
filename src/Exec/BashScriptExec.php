@@ -52,7 +52,7 @@ class BashScriptExec implements ExecInterface
                         break;
                     }
                 } else {
-                    throw new \RuntimeException('Could not get proc status');
+                    throw new RuntimeException('Could not get proc status');
                 }
             }
         } else {

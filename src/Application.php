@@ -26,7 +26,6 @@ use Symfony\Component\Yaml\Parser;
 class Application extends BaseApplication
 {
     const A_CONFIG_FILE = 'A_CONFIG_FILE';
-
     /** @var ClassLoader */
     private $loader;
     /** @var ContainerInterface */
@@ -115,11 +114,19 @@ EOV
         }
     }
 
+    private function createHash(string $file) :string
+    {
+        $ctx = hash_init('sha1');
+        hash_update($ctx, $file);
+        hash_update($ctx, file_get_contents($file));
+        return substr(hash_final($ctx), 0, 8);
+    }
+
     private function init(InputInterface $input)
     {
         $file = $this->getConfigFile($input);
-        $hash = substr(sha1_file($file), 0, 8);
-        $cache = FileHelper::getCacheDir();
+        $hash = $this->createHash($file);
+        $cache = FileHelper::getCacheDir($hash);
         $isCache = false === $input->hasParameterOption(['--no-cache', '-N'], true);
         $isDebug = 3 === (int)getenv('SHELL_VERBOSITY') || $input->hasParameterOption('-vvv', true);
 
@@ -131,7 +138,7 @@ EOV
             }
         }
 
-        $cacheContainer = FileHelper::joinPath($cache, $hash . '.container.php');
+        $cacheContainer = $cache . '/container.php';
 
         if (false === $isCache || false === file_exists($cacheContainer)) {
 
@@ -144,7 +151,7 @@ EOV
                 unset($config['plugins']);
             }
 
-            $extension = new AppExtension($this->loader, $parser, $plugins);
+            $extension = new AppExtension($this->loader, $parser, $plugins, $cache);
             $container->addCompilerPass(new RegisterEnvVarProcessorsPass());
             $container->addCompilerPass(new CommandLoaderPass());
             $container->addCompilerPass(new TwigCompilerPass());
