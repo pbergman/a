@@ -25,9 +25,27 @@ an task and when set to the root all plugins have access
 to that macro.  
 EOF
         )
-                ->defaultValue([])
-                ->variablePrototype()->end()
-            ->end();
+            ->defaultValue([])
+            ->useAttributeAsKey('name')
+            ->arrayPrototype()
+                ->beforeNormalization()
+                    ->ifString()
+                    ->then(function($v) {
+                        return ['code' => $v, 'args' => []];
+                    })
+                ->end()
+                ->children()
+                    ->scalarNode('code')->end()
+                    ->arrayNode('args')
+                        ->beforeNormalization()
+                            ->castToArray()
+                        ->end()
+                        ->scalarPrototype()->end()
+                    ->end()
+                ->end()
+            ->end()
+            ->normalizeKeys(false);
+
         return $node;
     }
 }

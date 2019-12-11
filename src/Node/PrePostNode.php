@@ -38,6 +38,12 @@ class PrePostNode
                         ];
                     })
                 ->end()
+                ->info(<<<EOF
+$name hook which accepts an string, array of strings or more verbose with array 
+where every entry has an exec and weight so you can control merge position. 
+EOF
+                )
+
                 ->children()
                     ->scalarNode('exec')->end()
                     ->integerNode('weight')->defaultValue(0)->end()

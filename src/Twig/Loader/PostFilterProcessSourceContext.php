@@ -29,7 +29,7 @@ class PostFilterProcessSourceContext implements ProcessSourceContextInterface
             '/^(?P<TEXT>.+)\s\|\|\s(?P<FILTER>[^($|\()]+)(?:\((?P<ARGS>[^\)]+)\))?\s?$/ms',
             function($m) {
                 if ('nop' === $filter = trim($m['FILTER'])) {
-                    return $m['TEXT'];
+                    return $m['TEXT'] . ("\n" === substr($m[0], -1) ? "\n" : "");
                 }
                 $setName = $filter . '_args';
                 $filterName = $filter . ((isset($m['ARGS'])) ? '(' . $m['ARGS'] . ')' : '');

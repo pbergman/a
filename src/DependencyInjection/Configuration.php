@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\DependencyInjection;
 
 use App\Node\GlobalsNode;
+use App\Node\HeaderNode;
 use App\Node\MacroNode;
 use App\Node\ShellNode;
 use App\Node\TaskNode;
@@ -31,6 +32,7 @@ class Configuration implements ConfigurationInterface
                 ->append((new GlobalsNode())())
                 ->append((new MacroNode())())
                 ->append((new ShellNode())())
+                ->append((new HeaderNode())())
                 ->append((new TaskNode())())
             ->end();
 

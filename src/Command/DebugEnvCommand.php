@@ -19,8 +19,9 @@ class DebugEnvCommand extends Command
             ->setDescription('Dump the runtime config.')
             ->setHelp(<<<EOH
 
-This command will print the runtime config, which are 
-all currently available shell variables that start with A_ 
+This command will print the runtime config, which are all currently available 
+shell variables that start with A_. When the column 'is default' has the value 
+✓ it means that the env is set by the application.
 
 EOH
             );

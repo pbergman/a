@@ -3,15 +3,17 @@ declare(strict_types=1);
 
 namespace App\DependencyInjection;
 
-use App\Exception\ConfigException;
+use App\DependencyInjection\Dumper\XmlServiceDumper;
 use App\Helper\FileHelper;
 use App\Plugin\PluginConfig;
 use App\Plugin\PluginInterface;
+use App\Plugin\PluginRegistry;
 use Composer\Autoload\ClassLoader;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Yaml\Parser;
 
 class AppExtension extends Extension
@@ -36,12 +38,9 @@ class AppExtension extends Extension
     public function load(array $configs, ContainerBuilder $container)
     {
         if (false === is_file($file = FileHelper::joinPath($this->base, 'services.xml'))) {
-            $xml = new \DOMDocument('1.0', 'UTF-8');
-            $xml->preserveWhiteSpace = false;
-            $xml->formatOutput = true;
-            $xml->load(dirname(__DIR__, 2) . '/config/services.xml');
-            $plugins = $this->initPlugins($container, $configs, $xml);
-            $xml->save($file);
+            $writer = new XmlServiceDumper(dirname(__DIR__, 2));
+            $plugins = $this->initPlugins($container, $configs, $writer);
+            $writer->dump($file);
         } else {
             $plugins = $this->initPlugins($container, $configs);
         }
@@ -49,6 +48,12 @@ class AppExtension extends Extension
         $config = $this->getConfig($plugins, $configs);
         $loader = new XmlFileLoader($container, new FileLocator($this->base));
         $loader->load('services.xml');
+
+        $registry = $container->getDefinition(PluginRegistry::class);
+
+        foreach ($plugins as $name => $class) {
+            $registry->addMethodCall('addPlugin', [$name, new Reference($class)]);
+        }
 
         $container->setParameter('a.config', $config);
         $container
@@ -84,21 +89,10 @@ class AppExtension extends Extension
         return new FileLocator(array_merge(...$locations));
     }
 
-    private function initPlugins(ContainerBuilder $container, &$configs, \DOMDocument $xml = null) :array
+    private function initPlugins(ContainerBuilder $container, &$configs, XmlServiceDumper $xml = null) :array
     {
         $locator = $this->getPluginFileLocator();
         $plugins = $extensions = [];
-
-        if (null !== $xml){
-            if (null === $element = $xml->getElementsByTagName('prototype')->item(0)) {
-                throw new ConfigException('invalid service template, could not find prototype element');
-            }
-            foreach ($element->attributes as $attribute) {
-                if (('resource' === $attribute->name || 'exclude' === $attribute->name) && 0 === strpos($attribute->value, '..')) {
-                    $attribute->value = str_replace('..', dirname(__DIR__, 2), $attribute->value);
-                }
-            }
-        }
 
         foreach ($this->plugins as $plugin) {
             $location = $locator->locate($plugin);
@@ -107,7 +101,7 @@ class AppExtension extends Extension
             $extension = $namespace . 'Plugin';
 
             if (class_exists($extension) && is_a($extension, PluginInterface::class, true)) {
-                $extensions[] = $extension;
+                $extensions[$plugin] = $extension;
             } else {
                 $extension = null;
             }
@@ -117,21 +111,12 @@ class AppExtension extends Extension
             }
 
             if (null !== $xml) {
-                $attribute = $xml->createElement('prototype');
-                $attribute->setAttribute('namespace', $namespace);
-                $attribute->setAttribute('resource', $location . '/*');
-
-                if (null !== $service = $xml->getElementsByTagName('services')->item(0)) {
-                    $service->insertBefore($attribute, $element->nextSibling);
-                } else {
-                    throw new ConfigException('invalid service template, could not find services element');
-                }
+                $xml->addPrototype($namespace,  $location . '/*');
             }
 
             $plugins[$plugin] = [
                 'location' => $location,
                 'namespace' => $namespace,
-                'extension' => $extension,
             ];
         }
 

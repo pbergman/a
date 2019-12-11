@@ -16,7 +16,7 @@ class ShellNode
         $node = new ScalarNodeDefinition('shell');
         $node
             ->info(<<<EOI
-All tasks will be merged to an shell script to be executed and the global shell will be used for creating the shebang, see:
+All tasks will be merged to an shell script so it can be executed and this shell value will be used for the shebang, see:
   
   https://en.wikipedia.org/wiki/Shebang_(Unix)
   
@@ -35,7 +35,6 @@ EOI
                 }
             })
             ->end();
-        return $node;
         return $node;
     }
 }

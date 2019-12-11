@@ -8,6 +8,7 @@ use App\Exception\PluginNotFoundException;
 use App\Exception\TaskNotExistException;
 use App\Plugin\PluginCacheInterface;
 use App\Plugin\PluginConfig;
+use App\Plugin\PluginRegistry;
 use Symfony\Component\Config\Resource\FileResource;
 use Twig\Error\LoaderError;
 use Twig\Loader\LoaderInterface;
@@ -19,10 +20,10 @@ final class PluginLoader implements LoaderInterface
     private $config;
     /** @var ProcessSourceContextInterface */
     private $processor;
-    /** @var iterable|PluginCacheInterface[] */
+    /** @var PluginRegistry */
     private $plugins;
 
-    public function __construct(PluginConfig $config, ProcessSourceContextInterface $processor, iterable $plugins)
+    public function __construct(PluginConfig $config, ProcessSourceContextInterface $processor, PluginRegistry $plugins)
     {
         $this->plugins = $plugins;
         $this->config = $config;
@@ -32,15 +33,25 @@ final class PluginLoader implements LoaderInterface
     private function getCode(string $name, $raw = false) :?string
     {
         try {
-            $ret = '';
-            foreach ($this->config->getTaskCode($name) as $line) {
-                $ret .= ($raw) ? $line : $this->processor->process($line);
+
+            if (0 === strpos($name, 'conf.')) {
+                $lines = (array)$this->config->getConfig(substr($name, 5));
+            } else {
+                $lines = $this->config->getTaskCode($name);
             }
-            return $ret;
+
+            if ($raw) {
+                return implode("", $lines);
+            } else {
+                $ret = '';
+                foreach ($lines as $line) {
+                    $ret .= ($raw) ? $line : $this->processor->process($line);
+                }
+                return $ret;
+            }
         } catch (TaskNotExistException $e) {
             throw new LoaderError(sprintf('Template "%s" is not defined.', $name), -1, null, $e);
         }
-
     }
 
     public function getSourceContext($name)
@@ -66,14 +77,13 @@ final class PluginLoader implements LoaderInterface
     public function isFresh($name, $time)
     {
         $name = explode(':', $name)[0];
-        foreach ($this->plugins as $pluginName => $plugin) {
-            if ($pluginName  === $name) {
-                if (false === $plugin->isFresh($time)) {
-                    return false;
-                }
-                break;
+
+        if (null !== $plugin = $this->plugins->getPlugin($name)) {
+            if (($plugin instanceof PluginCacheInterface) && false === $plugin->isFresh($time)) {
+                return false;
             }
         }
+
         try {
             // Only check the a.yaml file from the plugin because only when this
             // changes the cache is invalid. When an Plugin file is changed the

@@ -24,7 +24,7 @@ class DebugConfigDumpCommand extends Command
 
     protected function configure()
     {
-        $this->setDescription('Dump the merged config.');
+        $this->setDescription('Dump the merged en processed config.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

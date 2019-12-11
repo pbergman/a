@@ -1,7 +1,9 @@
 <?php
+declare(strict_types=1);
 namespace App\Command;
 
 use App\DependencyInjection\Configuration;
+use App\Plugin\PluginRegistry;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\Dumper\YamlReferenceDumper;
 use Symfony\Component\Console\Command\Command;
@@ -12,17 +14,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class DebugConfigDumpReferenceCommand extends Command
 {
-    /** @var array */
+    /** @var PluginRegistry */
     private $plugins;
 
     protected static $defaultName = 'debug:config:dump-reference';
 
-    public function __construct(iterable $plugins)
+    public function __construct(PluginRegistry $plugins)
     {
         parent::__construct();
-        foreach ($plugins as $plugin) {
-            $this->plugins[] = get_class($plugin);
-        }
+        $this->plugins = $plugins;
     }
 
 
@@ -51,20 +51,15 @@ EOH
     {
         $dumper = new YamlReferenceDumper();
         if (null !== $plugin = $input->getOption('plugin')) {
-            if (isset($this->plugins[$plugin]) && in_array($plugin, $this->plugins)) {
-                throw new \InvalidArgumentException(sprintf('Plugin %s is not registered. Available plugins \'%s\'', $plugin, implode('\', \'', $plugin)));
-            }
-            if (isset($this->plugins[$plugin])) {
-                $class = $this->plugins[$plugin];
-            } else {
-                $class = $plugin;
+            if (null === $class = $this->plugins->getPlugin($plugin)) {
+                throw new \InvalidArgumentException(sprintf('Plugin %s is not registered. Available plugins \'%s\'', $plugin, implode('\', \'', $this->plugins->getPluginNames())));
             }
             $builder = new TreeBuilder($plugin);
             $root = $builder->getRootNode();
             $class::appendConfiguration($root);
             $output->writeln($dumper->dumpNode($root->getNode(true)));
         } else {
-            $config = new Configuration($this->plugins);
+            $config = new Configuration(iterator_to_array($this->plugins));
             if (null === $path = $input->getArgument('path')) {
                 $output->writeln($dumper->dump($config));
             } else {

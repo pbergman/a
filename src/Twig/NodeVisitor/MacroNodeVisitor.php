@@ -12,7 +12,11 @@ use Twig\Source;
 
 class MacroNodeVisitor extends AbstractNodeVisitor
 {
+    use MacroFormatTrait;
+
+    /** @var PluginConfig  */
     private $config;
+    /** @var bool  */
     private $enabled = true;
 
     public function __construct(PluginConfig $config)
@@ -25,12 +29,12 @@ class MacroNodeVisitor extends AbstractNodeVisitor
         $macros = [];
 
         foreach ($this->config->getMacros() as $key => $macro) {
-            $stream = $twig->tokenize(new Source($macro,  'macro[' . '::' .$key . ']'));
+            $stream = $twig->tokenize(new Source($this->createMacros($key, $macro),  'macro[' . '::' .$key . ']'));
             $macros[] = $twig->parse($stream)->getNode('macros');
         }
 
         foreach ($this->config->getMacros($name) as $key => $macro) {
-            $stream = $twig->tokenize(new Source($macro,  'macro[' . $name . '::' .$key . ']'));
+            $stream = $twig->tokenize(new Source($this->createMacros($key, $macro),  'macro[' . $name . '::' .$key . ']'));
             $macros[] = $twig->parse($stream)->getNode('macros');
         }
 
@@ -41,11 +45,6 @@ class MacroNodeVisitor extends AbstractNodeVisitor
         return $macros;
     }
 
-    private function getTaskName(Node $node) :string
-    {
-        return explode('::', $node->getTemplateName())[0];
-    }
-
     protected function doEnterNode(Node $node, Environment $env)
     {
         if (!$this->enabled || !$node instanceof ModuleNode) {
@@ -54,7 +53,7 @@ class MacroNodeVisitor extends AbstractNodeVisitor
 
         try {
             $this->enabled = false;
-            $node->setNode('macros', new Node($this->getMacros($env, $this->getTaskName($node), $node->getNode('macros'))));
+            $node->setNode('macros', new Node($this->getMacros($env, $this->getTaskNameFormNode($node), $node->getNode('macros'))));
         } finally {
             $this->enabled = true;
         }

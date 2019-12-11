@@ -97,7 +97,7 @@ EOF
                         ->defaultNull()
                     ->end()
                     ->scalarNode('description')->defaultValue('')->end()
-                    ->scalarNode('default')->defaultNull()->end()
+                    ->variableNode('default')->defaultNull()->end()
                 ->end()
             ->end()
             ->normalizeKeys(false);

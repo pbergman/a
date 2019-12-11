@@ -36,21 +36,7 @@ class Application extends BaseApplication
 
     public function __construct(ClassLoader $loader)
     {
-        parent::__construct(<<<EOV
-         ___     
-        /  /\    
-       /  /::\   
-      /  /:/\:\  
-     /  /:/~/::\ 
-    /__/:/ /:/\:\
-    \  \:\/:/__\/
-     \  \::/     
-      \  \:\     
-       \  \:\    
-        \__\/
-EOV
-, '0.0.1');
-
+        parent::__construct(ApplicationVersion::NAME, ApplicationVersion::VERSION);
         $this->loader = $loader;
     }
 
@@ -145,6 +131,7 @@ EOV
             $container = new ContainerBuilder();
             $parser = new Parser();
             $config = $parser->parseFile($file);
+            $plugins = [];
 
             if (isset($config['plugins'])) {
                 $plugins = $config['plugins'];
@@ -184,7 +171,7 @@ EOV
             return false;
         }
 
-        $cache = FileHelper::getCacheDir('twig', $hash);
+        $cache = FileHelper::getCacheDir($hash, 'twig');
 
         // try to create else disable cache because app should still
         // work so make an noop when check failed

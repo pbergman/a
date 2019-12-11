@@ -1,29 +1,25 @@
 <?php
 namespace App\ShellScript;
 
+use App\Exception\ShellScriptFactoryException;
+use App\Helper\ContextHelper;
 use App\Plugin\PluginConfig;
 use Twig\Environment;
+use Twig\Error\Error;
 
 class ShellScriptFactory implements ShellScriptFactoryInterface
 {
     /** @var Environment */
     private $twig;
-    /** @var bool */
-    private $debug;
 
-    public function __construct(Environment $twig, $debug = false)
+    public function __construct(Environment $twig)
     {
         $this->twig = $twig;
-        $this->debug = $debug;
     }
 
     /** @inheritDoc */
     public function create($fd, string $name, PluginConfig $cnf, array $ctx = [])
     {
-
-        fwrite($fd, sprintf("#!%s\n", $cnf->getConfig('shell', '/bin/bash')));
-        fwrite($fd, sprintf("set -e%s\n", $this->debug ? 'x' : null));
-
         foreach ($cnf->getAllConfig() as $key => $value) {
             if (in_array($key, ['globals', 'macros', 'tasks'])) {
                 continue;
@@ -33,34 +29,20 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
             }
         }
 
-        $ctx['app.call'] = function($name, ...$args) use (&$ctx) {
-            if (false === $func = $this->twig->getFunction($name)) {
-                throw new \RuntimeException('No function exist for name ' . $name);
-            }
-            if ($func->needsContext()) {
-                array_unshift($args, $ctx);
-            }
-            if ($func->needsEnvironment()) {
-                array_unshift($args, $this->twig);
-            }
-            return $func->getCallable()(...$args);
-        };
+        $ctx['app.helper'] = new ContextHelper($this->twig, $ctx);
 
-        $ctx['app.filter'] = function($name, ...$args) use (&$ctx) {
-            if (false === $func = $this->twig->getFilter($name)) {
-                throw new \RuntimeException('No filter exist for name ' . $name);
-            }
-            if ($func->needsContext()) {
-                array_unshift($args, $ctx);
-            }
-            if ($func->needsEnvironment()) {
-                array_unshift($args, $this->twig);
-            }
-            return $func->getCallable()(...$args);
-        };
+        fwrite($fd, sprintf("#!%s\n", $cnf->getConfig('shell', '/bin/bash')));
 
-        if (($output = $this->twig->render($name, $ctx)) && !empty(trim($output))) {
-            fwrite($fd, $output);
+        try {
+            if (null !== $header = $cnf->getConfig('header')) {
+                fwrite($fd, $this->twig->render('conf.header', $ctx) . "\n");
+            }
+
+            if (($output = $this->twig->render($name, $ctx)) && !empty(trim($output))) {
+                fwrite($fd, $output);
+            }
+        } catch (Error $e) {
+            throw new ShellScriptFactoryException('failed to create shell script', 0, $e);
         }
     }
 }
