@@ -43,6 +43,8 @@ class TaskNode
                     ->scalarNode('help')->defaultNull()->end()
                     ->scalarNode('description')->defaultNull()->end()
                     ->booleanNode('hidden')->defaultFalse()->end()
+                    ->append((new ExporstNode())())
+                    ->append((new EnvsNode())())
                     ->append((new MacroNode())())
                     ->append((new ArgNode())())
                     ->append((new OptNode())())

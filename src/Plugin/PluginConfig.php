@@ -53,6 +53,11 @@ class PluginConfig
         return $this->config;
     }
 
+    public function hasConfig(string $name) :bool
+    {
+        return array_key_exists($name, $this->config);
+    }
+
     public function getConfig(string $name, $default = null)
     {
         return array_key_exists($name, $this->config) ? $this->config[$name] : $default;
@@ -83,6 +88,36 @@ class PluginConfig
 
         if (array_key_exists($task, $tasks)) {
             return $tasks[$task]['macros'];
+        }
+
+        return [];
+    }
+
+    public function getEnvs(string $task = null) :?array
+    {
+        if (null === $task) {
+            return $this->getConfig('envs', []);
+        }
+
+        $tasks = $this->getTasks();
+
+        if (array_key_exists($task, $tasks)) {
+            return $tasks[$task]['envs'] + $this->getConfig('envs', []);
+        }
+
+        return [];
+    }
+
+    public function getExports(string $task = null) :?array
+    {
+        if (null === $task) {
+            return $this->getConfig('exports');
+        }
+
+        $tasks = $this->getTasks();
+
+        if (array_key_exists($task, $tasks)) {
+            return $tasks[$task]['exports'] + $this->getConfig('exports', []);
         }
 
         return [];

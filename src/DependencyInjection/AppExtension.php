@@ -9,6 +9,8 @@ use App\Plugin\PluginConfig;
 use App\Plugin\PluginInterface;
 use App\Plugin\PluginRegistry;
 use Composer\Autoload\ClassLoader;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
+use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -45,7 +47,13 @@ class AppExtension extends Extension
             $plugins = $this->initPlugins($container, $configs);
         }
 
-        $config = $this->getConfig($plugins, $configs);
+        try {
+            $config = $this->getConfig($plugins, $configs);
+        } catch(InvalidConfigurationException $e) {
+            fwrite(STDERR, $e->getMessage() . "\n");
+            exit(124);
+        }
+
         $loader = new XmlFileLoader($container, new FileLocator($this->base));
         $loader->load('services.xml');
 

@@ -19,19 +19,19 @@ class BashScriptExec implements ExecInterface
         $this->base = $base;
     }
 
-    /**
-     * @param resource $script
-     * @param resource|null $stdout
-     * @param resource|null $stderr
-     * @return int
-     */
-    public function exec($script, $stdout = null, $stderr = null) :int
+    public function exec($script, array $envs = [], $stdout = null, $stderr = null) :int
     {
+        if (empty($envs)) {
+            $envs = null;
+        }
+
         if (!is_resource($script)) {
             throw new InvalidArgumentException(sprintf('Script argument must be a valid resource type. %s given.' . gettype($script)));
         }
-        $proc = proc_open(sprintf('bash -c \'source %s\'', $this->filepath()), $this->getDescriptors($script, $stdout, $stderr), $pipes);
+
+        $proc = proc_open(sprintf('bash -c \'source %s\'', $this->filepath()), $this->getDescriptors($script, $stdout, $stderr), $pipes, null, $envs);
         $stat = ['signaled' => false, 'stopped' => false, 'exitcode' => -1];
+
         if (is_resource($proc)) {
             while (true) {
                 if (false !== $stat = proc_get_status($proc)){
@@ -58,12 +58,15 @@ class BashScriptExec implements ExecInterface
         } else {
             throw new RuntimeException('Cannot execute child process');
         }
+
         if ($stat['signaled']) {
             throw new ExecFailedException(sprintf('The child process has been terminated by an uncaught signal (%d).', $stat['termsig']));
         }
+
         if ($stat['stopped']) {
             throw new ExecFailedException(sprintf('The child process has been stopped by a signal (%d).', $stat['stopsig']));
         }
+
         return $stat['exitcode'];
     }
 

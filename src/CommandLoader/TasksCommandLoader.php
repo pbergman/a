@@ -107,7 +107,7 @@ class TasksCommandLoader implements CommandLoaderInterface
                 try {
                     $script = fopen('php://temp', 'wb+');
                     $this->scriptBuilder->create($script, $name, $this->config, $cxt);
-                    return $this->exec->exec($script);
+                    return $this->exec->exec($script, $this->config->getEnvs($name));
                 } finally {
                     fclose($script);
                 }
