@@ -130,7 +130,7 @@ class Application extends BaseApplication
 
             $container = new ContainerBuilder();
             $parser = new Parser();
-            $config = $parser->parseFile($file);
+            $config = $parser->parseFile($file) ?? [];
             $plugins = [];
 
             if (isset($config['plugins'])) {
