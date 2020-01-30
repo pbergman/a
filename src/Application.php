@@ -138,6 +138,23 @@ class Application extends BaseApplication
                 unset($config['plugins']);
             }
 
+            $abstracts = [];
+
+            foreach ($config['tasks'] as $name => $task) {
+                if (isset($task['abstract']) && (bool)$task['abstract']) {
+                    $abstracts[$name] = $task;
+                    unset($config['tasks'][$name], $task['abstract']);
+                }
+            }
+
+            foreach ($config['tasks'] as $name => &$task) {
+                foreach ($abstracts as $ns => $value) {
+                    if (0 === strpos($name, $ns) && in_array($name[strlen($ns)], ['.', ':'])) {
+                        $task += $value;
+                    }
+                }
+            }
+
             $extension = new AppExtension($this->loader, $parser, $plugins, $cache);
             $container->addCompilerPass(new RegisterEnvVarProcessorsPass());
             $container->addCompilerPass(new CommandLoaderPass());

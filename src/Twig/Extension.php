@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Twig;
 
+use App\Application;
 use App\Plugin\PluginConfig;
 use App\Twig\NodeVisitor\NodeVisitorContainer;
 use Twig\Extension\AbstractExtension;
@@ -31,7 +32,7 @@ class Extension extends AbstractExtension implements GlobalsInterface
     /** @inheritDoc */
     public function getGlobals()
     {
-        return $this->config->getConfig('globals');
+        return $this->config->getConfig('globals') + ['config_dir' => dirname(getenv(Application::A_CONFIG_FILE))];
     }
 
     /**
@@ -46,9 +47,10 @@ class Extension extends AbstractExtension implements GlobalsInterface
             new TwigFunction('cwd', 'getcwd'),
             new TwigFunction('is_dir', 'is_dir'),
             new TwigFunction('is_file', 'is_file'),
+            new TwigFunction('file_get_contents', 'file_get_contents'),
             new TwigFunction(
                 'arg',
-                function($context, $key) {
+                static function($context, $key) {
                     return $context['input']->getArgument($key);
                 },
                 [
@@ -57,7 +59,7 @@ class Extension extends AbstractExtension implements GlobalsInterface
             ),
             new TwigFunction(
                 'opt',
-                function($context, $key) {
+                static function($context, $key) {
                     return $context['input']->getOption($key);
                 },
                 [

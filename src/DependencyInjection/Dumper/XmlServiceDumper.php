@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace App\DependencyInjection\Dumper;
 
-use App\Twig\UndefinedFilterCallback;
-use App\Twig\UndefinedFunctionCallback;
-
 class XmlServiceDumper
 {
 
@@ -136,21 +133,6 @@ class XmlServiceDumper
             }
 
             $writer->endElement();
-
-            $calls = [
-                'registerUndefinedFunctionCallback' => UndefinedFunctionCallback::class,
-                'registerUndefinedFilterCallback' => UndefinedFilterCallback::class
-            ];
-
-            foreach ($calls as $method => $service) {
-                $writer->startElement('call');
-                $this->writeAttributes($writer, ['method' => $method]);
-                $writer->startElement('argument');
-                $this->writeAttributes($writer, ['type' => 'service', 'id' => $service]);
-                $writer->endElement();
-                $writer->endElement();
-            }
-
             $writer->endElement();
 
         $writer->endElement();

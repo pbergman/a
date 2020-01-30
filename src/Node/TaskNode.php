@@ -39,6 +39,7 @@ class TaskNode
                     })
                 ->end()
                 ->children()
+                    ->booleanNode('abstract')->defaultFalse()->end()
                     ->scalarNode('name')->end()
                     ->scalarNode('help')->defaultNull()->end()
                     ->scalarNode('description')->defaultNull()->end()

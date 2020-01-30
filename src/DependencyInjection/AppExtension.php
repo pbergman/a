@@ -5,12 +5,12 @@ namespace App\DependencyInjection;
 
 use App\DependencyInjection\Dumper\XmlServiceDumper;
 use App\Helper\FileHelper;
+use App\Model\TaskEntry;
 use App\Plugin\PluginConfig;
 use App\Plugin\PluginInterface;
 use App\Plugin\PluginRegistry;
 use Composer\Autoload\ClassLoader;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
-use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -63,10 +63,12 @@ class AppExtension extends Extension
             $registry->addMethodCall('addPlugin', [$name, new Reference($class)]);
         }
 
-        $container->setParameter('a.config', $config);
+        $configName = FileHelper::joinPath($this->base, 'config.php');
+        file_put_contents($configName, sprintf('<?php return %s;', var_export($config, true)));
+
         $container
             ->getDefinition(PluginConfig::class)
-            ->setArgument(0, '%a.config%');
+            ->setArgument(0, $configName);
 
     }
 
@@ -132,8 +134,14 @@ class AppExtension extends Extension
         return $extensions;
     }
 
-    private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :string
+    private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskEntry
     {
+
+//        if ("\n" !== substr($exec, -1)) {
+//            $exec .= "\n";
+//        }
+//        return new TaskEntry($exec, $task, $plugin, $section, $index);
+
         return json_encode(['exec' => $exec, 'task' => $task, 'plugin' => $plugin, 'section' => $section, 'index' => $index]);
     }
 

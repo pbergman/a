@@ -11,13 +11,15 @@ class PluginConfig
     /** @var array */
     private $config;
 
-    public function __construct(array $config)
+    public function __construct(string $file)
     {
-        $this->config = $this->normalizeConfig($config);
+        $this->config = $this->normalizeConfig($file);
     }
 
-    private function normalizeConfig(array $cnf) :array
+    private function normalizeConfig(string $file) :array
     {
+        $cnf = include $file;
+var_dump($cnf);exit;
         foreach ($cnf['tasks'] as $name => $task) {
             foreach (['pre', 'post', 'exec'] as $section) {
                 foreach ($cnf['tasks'][$name][$section] as $index => $line) {
