@@ -67,8 +67,11 @@ class AppExtension extends Extension
         file_put_contents($configName, sprintf('<?php return %s;', var_export($config, true)));
 
         $container
+            ->setParameter('env(A_CONFIG)', $configName);
+
+        $container
             ->getDefinition(PluginConfig::class)
-            ->setArgument(0, $configName);
+            ->setArgument(0, '%env(require:A_CONFIG)%');
 
     }
 
@@ -134,15 +137,35 @@ class AppExtension extends Extension
         return $extensions;
     }
 
-    private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskEntry
+    private function unserialize(string $data) :TaskEntry
     {
+        if (false !== $data = \unserialize($data, [TaskEntry::class])) {
+            return $data;
+        }
 
-//        if ("\n" !== substr($exec, -1)) {
-//            $exec .= "\n";
-//        }
-//        return new TaskEntry($exec, $task, $plugin, $section, $index);
+        throw new \RuntimeException('Failed to unserialize config');
+    }
 
-        return json_encode(['exec' => $exec, 'task' => $task, 'plugin' => $plugin, 'section' => $section, 'index' => $index]);
+    private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :string
+    {
+        if ("\n" !== substr($exec, -1)) {
+            $exec .= "\n";
+        }
+
+        return \serialize(TaskEntry::newTaskEntry($exec, $task, $plugin, $section, $index));
+    }
+
+    private function postProcessConfig(array &$config)
+    {
+        if (!empty($config['tasks'])) {
+            foreach ($config['tasks'] as $taskName => &$taskDef) {
+                foreach (['pre', 'post', 'exec'] as $key) {
+                    foreach ($taskDef[$key] as $i => $line) {
+                        $taskDef[$key][$i] = $this->unserialize($line);
+                    }
+                }
+            }
+        }
     }
 
     private function processConfig(string $name, array $config) :array

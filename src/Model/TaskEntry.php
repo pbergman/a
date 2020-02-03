@@ -10,15 +10,17 @@ class TaskEntry
     /** @var TaskMeta */
     private $meta;
 
-    public function __construct(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0)
+    public static function newTaskEntry(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskEntry
     {
-        $this->exec = $exec;
-        $this->meta = new TaskMeta($task, $plugin, $section, $index);
+        $instance = new self();
+        $instance->exec = $exec;
+        $instance->meta = TaskMeta::newTaskMeta($task, $plugin, $section, $index);
+        return $instance;
     }
 
     public static function __set_state($state)
     {
-        $task = (new \ReflectionClass(__CLASS__))->newInstanceWithoutConstructor();
+        $task = new self();
         $task->exec = $state['exec'];
         $task->meta = $state['meta'];
         return $task;

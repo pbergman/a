@@ -11,43 +11,9 @@ class PluginConfig
     /** @var array */
     private $config;
 
-    public function __construct(string $file)
+    public function __construct(array $config)
     {
-        $this->config = $this->normalizeConfig($file);
-    }
-
-    private function normalizeConfig(string $file) :array
-    {
-        $cnf = include $file;
-var_dump($cnf);exit;
-        foreach ($cnf['tasks'] as $name => $task) {
-            foreach (['pre', 'post', 'exec'] as $section) {
-                foreach ($cnf['tasks'][$name][$section] as $index => $line) {
-                    $cnf['tasks'][$name][$section][$index] = $this->newTaskEntry($line);
-                }
-            }
-        }
-
-        ksort($cnf['tasks']);
-
-        return $cnf;
-    }
-
-    private function newTaskEntry(string $line) :TaskEntry
-    {
-        $data = json_decode($line, true);
-
-        if ("\n" !== substr($data['exec'], -1)) {
-            $data['exec'] .= "\n";
-        }
-
-        return new TaskEntry(
-            $data['exec'],
-            $data['task'],
-            $data['plugin'],
-            $data['section'],
-            $data['index']
-        );
+        $this->config = $config;
     }
 
     public function getAllConfig() :array

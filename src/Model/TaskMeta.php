@@ -14,12 +14,14 @@ class TaskMeta
     /** @var int */
     private $index;
 
-    public function __construct(string $task, string  $plugin, string  $section = 'exec', $index = 0)
+    public static function newTaskMeta(string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskMeta
     {
-        $this->task = $task;
-        $this->plugin = $plugin;
-        $this->section = $section;
-        $this->index = $index;
+        $instance = new self();
+        $instance->task = $task;
+        $instance->plugin = $plugin;
+        $instance->section = $section;
+        $instance->index = $index;
+        return $instance;
     }
 
     /**
