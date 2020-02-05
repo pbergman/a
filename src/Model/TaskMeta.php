@@ -58,7 +58,7 @@ class TaskMeta
 
     public static function __set_state($data)
     {
-        return new self(
+        return self::newTaskMeta(
             (string)$data['task'],
             (string)$data['plugin'],
             (string)$data['section'],

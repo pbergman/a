@@ -26,7 +26,6 @@ class TaskEntry
         return $task;
     }
 
-
     public function __toString()
     {
         return $this->exec;

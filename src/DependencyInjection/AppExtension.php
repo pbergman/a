@@ -63,6 +63,8 @@ class AppExtension extends Extension
             $registry->addMethodCall('addPlugin', [$name, new Reference($class)]);
         }
 
+        $this->postProcessConfig($config);
+
         $configName = FileHelper::joinPath($this->base, 'config.php');
         file_put_contents($configName, sprintf('<?php return %s;', var_export($config, true)));
 
