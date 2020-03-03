@@ -63,8 +63,6 @@ class AppExtension extends Extension
             $registry->addMethodCall('addPlugin', [$name, new Reference($class)]);
         }
 
-        $this->postProcessConfig($config);
-
         $configName = FileHelper::joinPath($this->base, 'config.php');
         file_put_contents($configName, sprintf('<?php return %s;', var_export($config, true)));
 
@@ -139,54 +137,37 @@ class AppExtension extends Extension
         return $extensions;
     }
 
-    private function unserialize(string $data) :TaskEntry
-    {
-        if (false !== $data = \unserialize($data, [TaskEntry::class])) {
-            return $data;
-        }
-
-        throw new \RuntimeException('Failed to unserialize config');
-    }
-
-    private function serialize(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :string
+    private function wrapExecLine(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskEntry
     {
         if ("\n" !== substr($exec, -1)) {
             $exec .= "\n";
         }
 
-        return \serialize(TaskEntry::newTaskEntry($exec, $task, $plugin, $section, $index));
-    }
-
-    private function postProcessConfig(array &$config)
-    {
-        if (!empty($config['tasks'])) {
-            foreach ($config['tasks'] as $taskName => &$taskDef) {
-                foreach (['pre', 'post', 'exec'] as $key) {
-                    foreach ($taskDef[$key] as $i => $line) {
-                        $taskDef[$key][$i] = $this->unserialize($line);
-                    }
-                }
-            }
-        }
+        return TaskEntry::newTaskEntry($exec, $task, $plugin, $section, $index);
     }
 
     private function processConfig(string $name, array $config) :array
     {
+
         if (!empty($config['tasks'])) {
             foreach ($config['tasks'] as $taskName => &$taskDef) {
                 switch (gettype($taskDef)) {
                     case 'string':
-                        $taskDef = $this->serialize($taskDef, $taskName, $name);
+                        $taskDef = $this->wrapExecLine($taskDef, $taskName, $name);
                         break;
                     case 'array':
-                        foreach (['pre', 'post', 'exec'] as $key) {
+                        foreach (['exec', 'pre', 'post'] as $key) {
                             if (isset($taskDef[$key])) {
                                 if (is_array($taskDef[$key])) {
                                     foreach ($taskDef[$key] as $i => $line) {
-                                        $taskDef[$key][$i] = $this->serialize($line, $taskName, $name, $key, $i);
+                                        if (('pre' === $key || 'post' === $key) && is_array($line) && isset($line['exec'])) {
+                                            $taskDef[$key][$i]['exec'] = $this->wrapExecLine($line['exec'], $taskName, $name, $key, $i);
+                                        } else {
+                                            $taskDef[$key][$i] = $this->wrapExecLine((string)$line, $taskName, $name, $key, $i);
+                                        }
                                     }
                                 } else {
-                                    $taskDef[$key] = $this->serialize($taskDef[$key], $taskName, $name, $key);
+                                    $taskDef[$key] = $this->wrapExecLine($taskDef[$key], $taskName, $name, $key);
                                 }
                             }
                         }

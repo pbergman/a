@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Node;
 
+use App\Config\Builder\TaskNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
@@ -44,7 +45,7 @@ class TaskNode
                     ->scalarNode('help')->defaultNull()->end()
                     ->scalarNode('description')->defaultNull()->end()
                     ->booleanNode('hidden')->defaultFalse()->end()
-                    ->append((new ExporstNode())())
+                    ->append((new ExportNode())())
                     ->append((new EnvsNode())())
                     ->append((new MacroNode())())
                     ->append((new ArgNode())())
@@ -52,6 +53,9 @@ class TaskNode
                     ->append((new PrePostNode())('pre'))
                     ->append((new PrePostNode())('post'))
                     ->arrayNode('exec')
+                        ->children()
+                            ->setNodeClass('task', TaskNodeDefinition::class)
+                        ->end()
                         ->info(<<<EOF
 Similar to pre and post with the exception this won`t be merged
 and only accepts a strings or array of strings as value.
@@ -62,7 +66,8 @@ EOF
                             ->ifString()
                             ->castToArray()
                         ->end()
-                        ->scalarPrototype()->end()
+                        ->prototype('task')->end()
+//                        ->scalarPrototype()->end()
                         ->defaultValue([])
                     ->end()
                 ->end()

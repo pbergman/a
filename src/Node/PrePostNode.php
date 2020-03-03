@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Node;
 
+use App\Config\Builder\TaskNodeDefinition;
+use App\Model\TaskEntry;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
@@ -18,7 +20,9 @@ class PrePostNode
         $node = new ArrayNodeDefinition($name);
         $node
             ->beforeNormalization()
-                ->ifString()
+                ->ifTrue(function($v) {
+                    return $v instanceof TaskEntry;
+                })
                 ->then(function($v) {
                     return [
                         [
@@ -30,11 +34,13 @@ class PrePostNode
             ->end()
             ->arrayPrototype()
                 ->beforeNormalization()
-                    ->ifString()
+                    ->ifTrue(function($v) {
+                        return $v instanceof TaskEntry;
+                    })
                     ->then(function($v) {
                         return [
                             'weight' => 0,
-                            'exec' => $v
+                            'exec' => $v,
                         ];
                     })
                 ->end()
@@ -45,7 +51,8 @@ EOF
                 )
 
                 ->children()
-                    ->scalarNode('exec')->end()
+                    ->setNodeClass('task', TaskNodeDefinition::class)
+                    ->node('exec', 'task')->end()
                     ->integerNode('weight')->defaultValue(0)->end()
                 ->end()
             ->end()

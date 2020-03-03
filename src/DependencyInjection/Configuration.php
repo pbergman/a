@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\DependencyInjection;
 
 use App\Node\EnvsNode;
-use App\Node\ExporstNode;
+use App\Node\ExportNode;
 use App\Node\GlobalsNode;
 use App\Node\HeaderNode;
 use App\Node\MacroNode;
@@ -28,12 +28,11 @@ class Configuration implements ConfigurationInterface
     {
         $builder = new TreeBuilder('a');
         $root = $builder->getRootNode();
-
         $root
             ->children()
                 ->append((new GlobalsNode())())
                 ->append((new MacroNode())())
-                ->append((new ExporstNode())())
+                ->append((new ExportNode())())
                 ->append((new EnvsNode())())
                 ->append((new ShellNode())())
                 ->append((new HeaderNode())())

@@ -1,11 +1,27 @@
 ```
 tasks:
+
     # Prototype
     name:
+        abstract:             false
         name:                 ~
         help:                 null
         description:          null
         hidden:               false
+
+        # extra environment variables that will exported in head of script
+        exports:
+
+            # Prototype
+            name:                 ~
+
+        # Environment variables that will be used run this application.
+        # 
+        # When not provided it will use the environment of parent process.
+        envs:
+
+            # Prototype
+            name:                 ~
 
         # Macros that can be used reusable logic the templates, see:
         # 
@@ -17,7 +33,12 @@ tasks:
         # To scope macros to an task you should define them under
         # an task and when set to the root all plugins have access
         # to that macro.  
-        macros:               []
+        macros:
+
+            # Prototype
+            name:
+                code:                 ~
+                args:                 []
 
         # An argument can be as simple as key with null value which will normalized to an 
         # argument that requires an value:

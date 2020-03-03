@@ -6,7 +6,7 @@ namespace App\Node;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 
-class ExporstNode
+class ExportNode
 {
     public function __invoke(): NodeDefinition
     {

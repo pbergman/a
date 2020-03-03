@@ -4,8 +4,8 @@
 2. [start](#start) an task
 3. [test](#test) your script
 4. [default value](#default-value) for you argument
-4. [multiple values](#multiple-values) for you argument
-4. [macros](#macros) for reusable code
+5. [multiple values](#multiple-values) for you argument
+6. [macros](#macros) for reusable code
 
 
 ##### Intro
@@ -141,7 +141,7 @@ to inspect out command we can also dump the processed config which is used by th
 
 ##### Multiple Values
 
-To let the argument support multiple `name` values we have to describe our argument more verbose and change the mode to `is_array`, make the default an array and handle/format argument because this will be an array. To read more about this jou can see the `debug:config:dump-reference tasks.name.args` command which will give you an comprehensive description about the argument options.
+If our argument needs to support multiple `name` values we have to describe our argument more verbose and change the mode to `is_array`, make the default an array and handle/format argument because this will be an array. To read more about this jou can see the `debug:config:dump-reference tasks.name.args` command which will give you an comprehensive description about the argument options.
 
 So wo are going to change the tasks to something like this:
 
@@ -173,7 +173,7 @@ tasks:
 
 ##### Macros
 
-If we want te reuse a peace of code we could create an [macro](https://twig.symfony.com/doc/2.x/tags/macro.html). There are 2 ways of defining macros where the first one is by just creating an macros like you would normally do:
+If we want te reuse a peace of code we can create an [macro](https://twig.symfony.com/doc/2.x/tags/macro.html). There are 2 ways of defining macros where the first one is by just creating an macros like you would normally do:
 
 ```
 tasks:
