@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\Node;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -17,13 +17,49 @@ class ArgNode
     {
         $node = new ArrayNodeDefinition('args');
         $node
+            ->info(<<<EOF
+An argument can be as simple as key with null value which will normalized to an 
+argument that requires an value:
+
+tasks:
+    example:
+        args:
+            foo: ~
+            
+will be normalized to:
+
+tasks:
+    example:
+        opts:
+            foo: 
+                mode: 1 # InputArgument::REQUIRED
+                
+          
+An other short hand is just to provide an key value pair which will be normalized to 
+an argument where the value is required and default id the value:
+
+tasks:
+    example:
+        artg:
+            foo: bar
+            
+will be normalized to:
+
+tasks:
+    example:
+        artg:
+            foo: 
+                mode: 1 # InputArgument::VALUE_REQUIRED
+                default: bar
+EOF
+            )
             ->defaultValue([])
             ->useAttributeAsKey('name')
             ->arrayPrototype()
                 ->beforeNormalization()
                     ->ifString()
                     ->then(function($v) {
-                        return ['default' => $v, 'mode' => InputArgument::REQUIRED];
+                        return ['default' => $v, 'mode' => InputArgument::OPTIONAL];
                     })
                 ->end()
                 ->beforeNormalization()
@@ -35,6 +71,13 @@ class ArgNode
                 ->children()
                     ->scalarNode('name')->end()
                     ->scalarNode('mode')
+                         ->info('similar to opts mode (see: tasks.name.opts.name.mode) except it will use the InputArgument::* constants')
+                         ->beforeNormalization()
+                            ->ifArray()
+                            ->then(function($v) {
+                                return implode('|', $v);
+                            })
+                        ->end()
                         ->beforeNormalization()
                             ->ifString()
                             ->then(function($v) {
@@ -54,9 +97,11 @@ class ArgNode
                         ->defaultNull()
                     ->end()
                     ->scalarNode('description')->defaultValue('')->end()
-                    ->scalarNode('default')->defaultNull()->end()
+                    ->variableNode('default')->defaultNull()->end()
                 ->end()
-            ->end();
+            ->end()
+            ->normalizeKeys(false);
+
         return $node;
     }
 }

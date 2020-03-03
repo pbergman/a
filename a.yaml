@@ -1,0 +1,48 @@
+#plugins: ['env']
+
+#shell: sh
+
+
+
+#tasks:
+#  env.foo: echo "hello"
+#  env.ssh:
+#    post:
+#      - "{% include 'env:foo' %}"
+##      - '{{ background(''sleep 10'',''FOO'') }}'
+##      - echo $FOO
+##      - wait $FOO
+#
+##      -
+##        weight: -10
+##        exec: '{{ ''echo "finished..."'' | background(''FOO'') }}'
+##      -
+##        weight: -5
+##        exec: echo $FOO
+#
+#envs:
+#  testing:
+#    ssh: git
+#    root: ~
+
+tasks:
+  example.template:
+    pre:  echo "post" || strrev || pos
+    exec: echo "exec"
+    post: echo "exec"
+
+#tasks:
+#  example.greet:
+#    macros:
+#      print:
+#        args: input
+#        code: |
+#          {% for user in arg('name') %}
+#              echo "{{ user }}"
+#          {% endfor %}
+#
+#    description: An greet example command
+#    args:
+#      name:
+#        mode: required|is_array
+#    exec: "{{ _self.print(input) }}"

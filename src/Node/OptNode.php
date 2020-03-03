@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Config;
+namespace App\Node;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
@@ -17,6 +17,43 @@ class OptNode
     {
         $node =  new ArrayNodeDefinition('opts');
         $node
+            ->info(<<<EOF
+An option can be as simple as key with null value which will normalized to an 
+option that not accepts an value (bool option):
+
+tasks:
+    example:
+        opts:
+            foo: ~
+            
+will be normalized to:
+
+tasks:
+    example:
+        opts:
+            foo: 
+                mode: 1 # InputOption::VALUE_NONE
+                
+          
+An other short hand is just to provide an key value pair which will be normalized to 
+an option with and value is required and the value is the default:
+
+tasks:
+    example:
+        opts:
+            foo: bar
+            
+will be normalized to:
+
+tasks:
+    example:
+        opts:
+            foo: 
+                mode: 2 # InputOption::VALUE_REQUIRED
+                default: bar
+
+EOF
+)
             ->defaultValue([])
             ->useAttributeAsKey('name')
             ->arrayPrototype()
@@ -36,6 +73,44 @@ class OptNode
                     ->scalarNode('name')->end()
                     ->scalarNode('shortcut')->defaultNull()->end()
                     ->scalarNode('mode')
+                        ->info(<<<EOF
+The mode node supports multiple formats that will be normalized to an acceptable \$mode argument value for the 
+InputOption (one of InputOption::VALUE_*). 
+
+When string is provided it will try te resolve that to one of the InputOption::VALUE_* constants by converting 
+the string to uppercase, prefixing with VALUE_ when it not starts with that and splitting the string on |. 
+
+
+    tasks:
+        example:
+            opts:
+                foo: 
+                    # as string
+                    mode: is_array|required
+                    
+                    # as array
+                    # mode: 
+                    #    - is_array
+                    #    - required
+                    
+                    # as int 
+                    # mode: 10                    
+                    
+    will be normalized to                 
+    
+    tasks:
+        example:
+            opts:
+                foo: 
+                    mode: 10 # InputOption::VALUE_REQUIRED|InputOption::VALUE_IS_ARRAY
+EOF
+                        )
+                        ->beforeNormalization()
+                            ->ifArray()
+                            ->then(function($v) {
+                                return implode('|', $v);
+                            })
+                        ->end()
                         ->beforeNormalization()
                             ->ifString()
                             ->then(function($v) {
@@ -59,9 +134,12 @@ class OptNode
                         ->defaultNull()
                     ->end()
                     ->scalarNode('description')->defaultValue('')->end()
-                    ->scalarNode('default')->defaultNull()->end()
+                    ->variableNode('default')->defaultNull()->end()
                 ->end()
-            ->end();
+            ->end()
+            ->normalizeKeys(false);
+
+
         return $node;
     }
 }
