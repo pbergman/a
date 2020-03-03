@@ -79,5 +79,5 @@ To read more about the options use the debug command:
 a debug:config:dump-reference tasks
 ```
 
-or read the docs [here](docs/tasks_reference.md)
+or read the docs [here](docs/tasks_example.md)
 -->
