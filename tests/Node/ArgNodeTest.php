@@ -34,7 +34,7 @@ class ArgNodeTest extends TestCase
                 [
                     'args' => [
                         'bar' => [
-                            'mode' => InputArgument::REQUIRED,
+                            'mode' => InputArgument::OPTIONAL,
                             'description' => '',
                             'default' => 'foo'
                         ]

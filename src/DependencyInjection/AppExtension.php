@@ -137,37 +137,27 @@ class AppExtension extends Extension
         return $extensions;
     }
 
-    private function wrapExecLine(string $exec, string $task, string  $plugin, string  $section = 'exec', $index = 0) :TaskEntry
-    {
-        if ("\n" !== substr($exec, -1)) {
-            $exec .= "\n";
-        }
-
-        return TaskEntry::newTaskEntry($exec, $task, $plugin, $section, $index);
-    }
-
     private function processConfig(string $name, array $config) :array
     {
-
         if (!empty($config['tasks'])) {
             foreach ($config['tasks'] as $taskName => &$taskDef) {
                 switch (gettype($taskDef)) {
                     case 'string':
-                        $taskDef = $this->wrapExecLine($taskDef, $taskName, $name);
+                        $taskDef = TaskEntry::newTaskEntry($taskDef, $taskName, $name);
                         break;
                     case 'array':
                         foreach (['exec', 'pre', 'post'] as $key) {
                             if (isset($taskDef[$key])) {
                                 if (is_array($taskDef[$key])) {
                                     foreach ($taskDef[$key] as $i => $line) {
-                                        if (('pre' === $key || 'post' === $key) && is_array($line) && isset($line['exec'])) {
-                                            $taskDef[$key][$i]['exec'] = $this->wrapExecLine($line['exec'], $taskName, $name, $key, $i);
+                                        if (('pre' === $key || 'post' === $key) && is_array($line) && (isset($line['exec']))) {
+                                            $taskDef[$key][$i]['exec'] = TaskEntry::newTaskEntry($line['exec'], $taskName, $name, $key, $i);
                                         } else {
-                                            $taskDef[$key][$i] = $this->wrapExecLine((string)$line, $taskName, $name, $key, $i);
+                                            $taskDef[$key][$i] = TaskEntry::newTaskEntry($line, $taskName, $name, $key, $i);
                                         }
                                     }
                                 } else {
-                                    $taskDef[$key] = $this->wrapExecLine($taskDef[$key], $taskName, $name, $key);
+                                    $taskDef[$key] = TaskEntry::newTaskEntry($taskDef[$key], $taskName, $name, $key);
                                 }
                             }
                         }
