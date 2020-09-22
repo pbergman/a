@@ -6,6 +6,7 @@
 4. [default value](#default-value) for you argument
 5. [multiple values](#multiple-values) for you argument
 6. [macros](#macros) for reusable code
+6. [extend](#extend) task templates
 
 
 ##### Intro
@@ -48,7 +49,7 @@ hello philip
 
 ##### Test
 
-Because by default tasks will be converted to an shell script and all task will have an `--dump` option to print the script to stdout instead of being executed. 
+By default tasks will be converted to an shell script and have an `--dump` option to print the generated script to stdout instead of being executed. 
 
 So by using the dump and pipe the output to an application like `bash -n` or [shellcheck](https://www.shellcheck.net/) we create an dry-run and do an check for syntax errors.
 
@@ -84,7 +85,7 @@ bash: line 4: syntax error: unexpected end of file
 Or with shellcheck:
 
 ```
-example:greet foo --dump | bash -nv
+example:greet foo --dump | shellcheck -
 ```
 
 which will give us something like:
@@ -173,7 +174,7 @@ tasks:
 
 ##### Macros
 
-If we want te reuse a peace of code we can create an [macro](https://twig.symfony.com/doc/2.x/tags/macro.html). There are 2 ways of defining macros where the first one is by just creating an macros like you would normally do:
+If we want te reuse a piece of code we can create an [macro](https://twig.symfony.com/doc/2.x/tags/macro.html). There are 2 ways of defining macros where the first one is by just creating an macros like you would normally do:
 
 ```
 tasks:
@@ -227,4 +228,66 @@ tasks:
     exec:
       - "{{ _self.print(input, 'hello')}}"
       - "{{ _self.print(input, 'good bye')}}"
+```
+
+##### Extend
+
+When you have a command with same opts or other shared config you could add them to all task but it is also posible to create an abstract task which other taks can extend.
+
+So for example we have some task like this: 
+
+```
+task:
+    a:
+        macros:
+            print:
+                args: name
+                code: hello {{ name }}
+        args:
+            name: ~
+        exec:  echo "{{ _self.print(arg('name'))}} you run A"
+
+    b:
+        macros:
+            print:
+                args: name
+                code: hello {{ name }}
+        args:
+            name: ~
+        exec:  echo "{{ _self.print(arg('name'))}} you run B"
+    c:
+        macros:
+            print:
+                args: name
+                code: hello {{ name }}
+        args:
+            name: ~
+            last_name: ~
+        exec:  echo "{{ _self.print(arg('name'))}} {{arg('last_name')}} you run C"
+```
+
+Which can also be defined like:
+
+```
+task:
+    x:
+        abstract: true
+        macros:
+            print:
+                args: name
+                code: hello {{ name }}
+        args:
+            name: ~
+    a:
+        extends: x
+        exec:  echo "{{ _self.print(arg('name'))}} you run A"
+
+    b:
+        extends: x
+        exec:  echo "{{ _self.print(arg('name'))}} you run B"
+    c:
+        extends: x
+        opts:
+            last_name: ~
+        exec:  echo "{{ _self.print(arg('name'))}} you run C"
 ```

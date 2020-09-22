@@ -5,7 +5,6 @@ namespace App\DependencyInjection\Dumper;
 
 class XmlServiceDumper
 {
-
     private $parameters = [
         'A_CACHE_TWIG' => false,
         'A_CACHE' => false,
@@ -91,6 +90,14 @@ class XmlServiceDumper
 
             $this->autoTagElement($writer, 'App\Twig\Loader\ProcessSourceContextInterface', 'app.twig.process_source_context');
             $this->autoTagElement($writer, 'App\Plugin\PluginInterface', 'app.plugin');
+            $this->autoTagElement($writer, 'Symfony\Component\EventDispatcher\EventSubscriberInterface', 'kernel.event_subscriber');
+
+            $this->startServiceElement($writer, 'Symfony\Component\EventDispatcher\EventDispatcher');
+            $writer->endElement();
+
+            $this->startServiceElement($writer, 'Symfony\Contracts\EventDispatcher\EventDispatcherInterface');
+            $this->writeAttributes($writer, ['alias' => 'Symfony\Component\EventDispatcher\EventDispatcher']);
+            $writer->endElement();
 
             $this->startServiceElement($writer, 'App\DependencyInjection\TypeFixEnvVarProcessor');
             $writer->startElement('tag');

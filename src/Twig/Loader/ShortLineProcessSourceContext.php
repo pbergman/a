@@ -5,13 +5,23 @@ namespace App\Twig\Loader;
 
 use Twig\Error\LoaderError;
 
+/**
+ * will transform short hand syntax like:
+ *
+ *   @(include "foo.txt")
+ *
+ */
 class ShortLineProcessSourceContext implements ProcessSourceContextInterface
 {
 
     public function process(string $context): string
     {
+        // also match escaped characters
+        // https://stackoverflow.com/a/5696141
         return preg_replace_callback(
-            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>[^\)]+)?\)/ms',
+            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>([^)\\\\]++|\\\\.)*?)\)/ms',
+
+//            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>[^\)]+)?\)/ms',
             function($m) {
                 switch ($m['tag']) {
                     // https://twig.symfony.com/doc/2.x/tags/verbatim.html
@@ -100,7 +110,12 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
             $matches['args'] = '';
         }
 
-        return '{% verbatim %}' . $matches['args'] . '{% endverbatim %}';
+        return '{% verbatim %}' . $this->unescape($matches['args']) . '{% endverbatim %}';
+    }
+
+    private function unescape($string) :string
+    {
+        return str_replace(['\\)', '\\('], [')', '('], $string);
     }
 
     private function unquote(string $str) :string

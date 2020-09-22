@@ -1,24 +1,28 @@
 <?php
 namespace App\ShellScript;
 
+use App\Events;
+use App\Events\WriterEvent;
 use App\Exception\ShellScriptFactoryException;
 use App\Helper\ContextHelper;
+use App\IO\WriterInterface;
 use App\Plugin\PluginConfig;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Twig\Environment;
 use Twig\Error\Error;
 
 class ShellScriptFactory implements ShellScriptFactoryInterface
 {
-    /** @var Environment */
     private $twig;
+    private $dispatcher;
 
-    public function __construct(Environment $twig)
+    public function __construct(Environment $twig, EventDispatcherInterface $dispatcher)
     {
         $this->twig = $twig;
+        $this->dispatcher = $dispatcher;
     }
 
-    /** @inheritDoc */
-    public function create($fd, string $name, PluginConfig $cnf, array $ctx = [])
+    private function populateCxt(PluginConfig $cnf, array &$ctx)
     {
         foreach ($cnf->getAllConfig() as $key => $value) {
             if (in_array($key, ['globals', 'macros', 'tasks'])) {
@@ -30,28 +34,28 @@ class ShellScriptFactory implements ShellScriptFactoryInterface
         }
 
         $ctx['app.helper'] = new ContextHelper($this->twig, $ctx);
+    }
 
-        fwrite($fd, sprintf("#!%s\n", $cnf->getConfig('shell', '/bin/bash')));
+    /** @inheritDoc */
+    public function create(WriterInterface $writer, string $name, PluginConfig $cnf, array $ctx = [])
+    {
+        $this->populateCxt($cnf, $ctx);
+        $writer->writef("#!%s\n", $cnf->getConfig('shell', '/bin/bash'));
 
         try {
-            if ($cnf->hasConfig('header')) {
-                fwrite($fd, $this->twig->render('conf.header', $ctx) . "\n");
+
+            if ($this->dispatcher->hasListeners(Events::PRE_TASK_WRITER)) {
+                $this->dispatcher->dispatch(new WriterEvent($name, $writer, $cnf, $ctx), Events::PRE_TASK_WRITER);
             }
-            if ([] !== $envs = $cnf->getEnvs($name)) {
-                $out = "# this script will be run with the following envs:\n";
-                foreach ($envs as $key => $value) {
-                    $out .= '# ' . $key . '=' . $value . "\n";
-                }
-                fwrite($fd, $out);
-            }
-            if ([] !== $exports = $cnf->getExports($name)) {
-                foreach ($exports as $key => $value) {
-                    fwrite($fd, sprintf("export %s=%s\n", $key, $value));
-                }
-            }
+
             if (($output = $this->twig->render($name, $ctx)) && !empty(trim($output))) {
-                fwrite($fd, $output);
+                $writer->write($output);
             }
+
+            if ($this->dispatcher->hasListeners(Events::POST_TASK_WRITER)) {
+                $this->dispatcher->dispatch(new WriterEvent($name, $writer, $cnf, $ctx), Events::POST_TASK_WRITER);
+            }
+
         } catch (Error $e) {
             throw new ShellScriptFactoryException('failed to create shell script', 0, $e);
         }

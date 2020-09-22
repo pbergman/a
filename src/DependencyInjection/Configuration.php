@@ -4,9 +4,7 @@ declare(strict_types=1);
 namespace App\DependencyInjection;
 
 use App\Node\EnvsNode;
-use App\Node\ExportNode;
 use App\Node\GlobalsNode;
-use App\Node\HeaderNode;
 use App\Node\MacroNode;
 use App\Node\ShellNode;
 use App\Node\TaskNode;
@@ -32,10 +30,8 @@ class Configuration implements ConfigurationInterface
             ->children()
                 ->append((new GlobalsNode())())
                 ->append((new MacroNode())())
-                ->append((new ExportNode())())
                 ->append((new EnvsNode())())
                 ->append((new ShellNode())())
-                ->append((new HeaderNode())())
                 ->append((new TaskNode())())
             ->end();
 
