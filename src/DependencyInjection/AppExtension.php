@@ -152,17 +152,17 @@ class AppExtension extends Extension
             foreach ($config['tasks'] as $taskName => &$taskDef) {
                 switch (gettype($taskDef)) {
                     case 'string':
-                        $taskDef = TaskEntry::newTaskEntry($taskDef, $taskName, $name);
+                        $taskDef = $this->wrapExecLine($taskDef, $taskName, $name);
                         break;
                     case 'array':
                         foreach (['exec', 'pre', 'post'] as $key) {
                             if (isset($taskDef[$key])) {
                                 if (is_array($taskDef[$key])) {
                                     foreach ($taskDef[$key] as $i => $line) {
-                                        if (('pre' === $key || 'post' === $key) && is_array($line) && (isset($line['exec']))) {
-                                            $taskDef[$key][$i]['exec'] = TaskEntry::newTaskEntry($line['exec'], $taskName, $name, $key, $i);
+                                        if (('pre' === $key || 'post' === $key) && is_array($line) && isset($line['exec'])) {
+                                            $taskDef[$key][$i]['exec'] = $this->wrapExecLine($line['exec'], $taskName, $name, $key, $i);
                                         } else {
-                                            $taskDef[$key][$i] = TaskEntry::newTaskEntry($line, $taskName, $name, $key, $i);
+                                            $taskDef[$key][$i] = $this->wrapExecLine((string)$line, $taskName, $name, $key, $i);
                                         }
                                     }
                                 } else {
