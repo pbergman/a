@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Tests\Node;
@@ -11,7 +10,6 @@ use Symfony\Component\Config\Definition\Processor;
 
 class TaskNodeTest extends TestCase
 {
-
     public function provider()
     {
         return [
@@ -26,7 +24,11 @@ class TaskNodeTest extends TestCase
                         'foo' => [
                             'exec' => ['bar'],
                             'hidden' => false,
+                            'abstract' => false,
                             'description' => null,
+                            'exports' => [],
+                            'envs' => [],
+                            'macros' => [],
                             'help' => null,
                             'args' => [],
                             'opts' => [],
@@ -50,7 +52,11 @@ class TaskNodeTest extends TestCase
                         'foo' => [
                             'exec' => ['bar'],
                             'hidden' => true,
+                            'abstract' => false,
                             'description' => null,
+                            'exports' => [],
+                            'envs' => [],
+                            'macros' => [],
                             'help' => null,
                             'args' => [],
                             'opts' => [],
@@ -74,7 +80,11 @@ class TaskNodeTest extends TestCase
                         'foo' => [
                             'exec' => ['bar', 'foo'],
                             'hidden' => true,
+                            'abstract' => false,
                             'description' => null,
+                            'exports' => [],
+                            'envs' => [],
+                            'macros' => [],
                             'help' => null,
                             'args' => [],
                             'opts' => [],

@@ -33,7 +33,7 @@ class TaskNode
             ->arrayPrototype()
                 ->beforeNormalization()
                     ->ifTrue(function($v){
-                        return is_string($v);
+                        return is_string($v) || is_object($v);
                     })
                     ->then(function($v) {
                         return ['exec' => [$v]];

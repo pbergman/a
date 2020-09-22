@@ -21,7 +21,7 @@ class PrePostNode
         $node
             ->beforeNormalization()
                 ->ifTrue(function($v) {
-                    return $v instanceof TaskEntry;
+                    return $v instanceof TaskEntry || is_string($v) ;
                 })
                 ->then(function($v) {
                     return [
@@ -35,7 +35,7 @@ class PrePostNode
             ->arrayPrototype()
                 ->beforeNormalization()
                     ->ifTrue(function($v) {
-                        return $v instanceof TaskEntry;
+                        return $v instanceof TaskEntry || is_string($v);
                     })
                     ->then(function($v) {
                         return [
