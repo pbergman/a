@@ -146,9 +146,8 @@ class AppExtension extends Extension
         return TaskEntry::newTaskEntry($exec, $task, $plugin, $section, $index);
     }
 
-    private function processConfig(string $name, array $config) :array
+    public function processConfig(string $name, array $config) :array
     {
-
         if (!empty($config['tasks'])) {
             foreach ($config['tasks'] as $taskName => &$taskDef) {
                 switch (gettype($taskDef)) {
@@ -167,7 +166,9 @@ class AppExtension extends Extension
                                         }
                                     }
                                 } else {
-                                    $taskDef[$key] = $this->wrapExecLine($taskDef[$key], $taskName, $name, $key);
+                                    if (!$taskDef[$key] instanceof TaskEntry) {
+                                        $taskDef[$key] = $this->wrapExecLine($taskDef[$key], $taskName, $name, $key);
+                                    }
                                 }
                             }
                         }

@@ -19,7 +19,7 @@ class ShortLineProcessSourceContext implements ProcessSourceContextInterface
         // also match escaped characters
         // https://stackoverflow.com/a/5696141
         return preg_replace_callback(
-            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>([^)\\]++|\\.)*?\)/ms',
+            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>([^)\\\\]++|\\\\.)*?)\)/ms',
 
 //            '/@(?P<tag>verbatim|raw|include|extends|embed|block|use)\((?P<args>[^\)]+)?\)/ms',
             function($m) {

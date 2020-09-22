@@ -61,7 +61,7 @@ class PluginConfig
         return [];
     }
 
-    public function getEnvs(string $task = null) :?array
+    public function getEnvs(string $task = null) :array
     {
         if (null === $task) {
             return $this->getConfig('envs', []);
@@ -71,21 +71,6 @@ class PluginConfig
 
         if (array_key_exists($task, $tasks)) {
             return $tasks[$task]['envs'] + $this->getConfig('envs', []);
-        }
-
-        return [];
-    }
-
-    public function getExports(string $task = null) :?array
-    {
-        if (null === $task) {
-            return $this->getConfig('exports');
-        }
-
-        $tasks = $this->getTasks();
-
-        if (array_key_exists($task, $tasks)) {
-            return $tasks[$task]['exports'] + $this->getConfig('exports', []);
         }
 
         return [];

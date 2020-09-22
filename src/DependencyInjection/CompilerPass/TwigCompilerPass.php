@@ -32,7 +32,5 @@ class TwigCompilerPass implements CompilerPassInterface
         foreach (array_keys($container->findTaggedServiceIds('twig.extension')) as $extension) {
             $definition->addMethodCall('addExtension', [new Reference($extension)]);
         }
-
-
     }
 }

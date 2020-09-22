@@ -5,6 +5,7 @@ namespace App\Exec;
 use App\Exec\Exception\ExecFailedException;
 use App\Exec\Exception\InvalidArgumentException;
 use App\Exec\Exception\RuntimeException;
+use App\IO\WriterInterface;
 
 class BashScriptExec implements ExecInterface
 {
@@ -19,14 +20,10 @@ class BashScriptExec implements ExecInterface
         $this->base = $base;
     }
 
-    public function exec($script, array $envs = [], $stdout = null, $stderr = null) :int
+    public function exec(WriterInterface $script, array $envs = [], $stdout = null, $stderr = null) :int
     {
         if (empty($envs)) {
             $envs = null;
-        }
-
-        if (!is_resource($script)) {
-            throw new InvalidArgumentException(sprintf('Script argument must be a valid resource type. %s given.' . gettype($script)));
         }
 
         $proc = proc_open(sprintf('bash -c \'source %s\'', $this->filepath()), $this->getDescriptors($script, $stdout, $stderr), $pipes, null, $envs);
@@ -70,7 +67,7 @@ class BashScriptExec implements ExecInterface
         return $stat['exitcode'];
     }
 
-    private function getDescriptors($script, $stdout = null, $stderr = null) :array
+    private function getDescriptors(WriterInterface $script, $stdout = null, $stderr = null) :array
     {
         if (null === $stdout) {
             $stdout = STDOUT;
@@ -82,7 +79,7 @@ class BashScriptExec implements ExecInterface
             0 => STDIN,
             1 => (STDOUT === $stdout) ? $stdout : ['pipe', 'w'],
             2 => (STDERR === $stderr) ? $stderr : ['pipe', 'w'],
-            $this->fd => $script,
+            $this->fd => $script->getResource(),
         ];
     }
 

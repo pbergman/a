@@ -3,17 +3,15 @@ tasks:
 
     # Prototype
     name:
+
+        # This task will be used as template to be merged with task that extend this when set to true.
         abstract:             false
-        name:                 ~
+
+        # Abstract templates to merge config with.
+        extends:              []
         help:                 null
         description:          null
         hidden:               false
-
-        # extra environment variables that will exported in head of script
-        exports:
-
-            # Prototype
-            name:                 ~
 
         # Environment variables that will be used run this application.
         # 
@@ -175,4 +173,5 @@ tasks:
         # Similar to pre and post with the exception this won`t be merged
         # and only accepts a strings or array of strings as value.
         exec:                 []
+
 ```

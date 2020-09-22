@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\CommandLoader;
 
 use App\Exec\ExecInterface;
+use App\IO\StdOutWriter;
+use App\IO\StreamWriter;
 use App\Plugin\PluginConfig;
 use App\ShellScript\ShellScriptFactoryInterface;
 use Symfony\Component\Console\Command\Command;
@@ -102,14 +104,14 @@ class TasksCommandLoader implements CommandLoaderInterface
             $cxt = ['input' => $input, 'output' => $output];
 
             if ($input->getOption('dump')) {
-                $this->scriptBuilder->create(STDOUT, $name, $this->config, $cxt);
+                $this->scriptBuilder->create(new StdOutWriter(), $name, $this->config, $cxt);
             } else {
                 try {
-                    $script = fopen('php://temp', 'wb+');
-                    $this->scriptBuilder->create($script, $name, $this->config, $cxt);
-                    return $this->exec->exec($script, $this->config->getEnvs($name));
+                    $writer = new StreamWriter('php://temp');
+                    $this->scriptBuilder->create($writer, $name, $this->config, $cxt);
+                    return $this->exec->exec($writer, $this->config->getEnvs($name));
                 } finally {
-                    fclose($script);
+                    $writer->close();
                 }
             }
             return 0;

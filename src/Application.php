@@ -9,9 +9,11 @@ use App\DependencyInjection\CompilerPass\CommandLoaderPass;
 use App\DependencyInjection\CompilerPass\NodeVisitorContainerPass;
 use App\DependencyInjection\CompilerPass\TwigCompilerPass;
 use App\DependencyInjection\Dumper\PhpDumper;
+use App\Exception\PluginException;
 use App\Exception\RuntimeException;
 use App\Helper\FileHelper;
 use Composer\Autoload\ClassLoader;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -21,7 +23,10 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Compiler\RegisterEnvVarProcessorsPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\EventDispatcher\DependencyInjection\RegisterListenersPass;
 use Symfony\Component\Yaml\Parser;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+
 
 class Application extends BaseApplication
 {
@@ -32,7 +37,6 @@ class Application extends BaseApplication
     private $container;
     /** @var array  */
     private $envKeysSet = [];
-
 
     public function __construct(ClassLoader $loader)
     {
@@ -138,28 +142,16 @@ class Application extends BaseApplication
                 unset($config['plugins']);
             }
 
-            $abstracts = [];
-
-            foreach ($config['tasks'] as $name => $task) {
-                if (isset($task['abstract']) && (bool)$task['abstract']) {
-                    $abstracts[$name] = $task;
-                    unset($config['tasks'][$name], $task['abstract']);
-                }
-            }
-
-            foreach ($config['tasks'] as $name => &$task) {
-                foreach ($abstracts as $ns => $value) {
-                    if (0 === strpos($name, $ns) && in_array($name[strlen($ns)], ['.', ':'])) {
-                        $task += $value;
-                    }
-                }
-            }
+            $this->resolveAbstractTasks($config);
 
             $extension = new AppExtension($this->loader, $parser, $plugins, $cache);
+            $config = $extension->processConfig('_root', $config);
+
             $container->addCompilerPass(new RegisterEnvVarProcessorsPass());
             $container->addCompilerPass(new CommandLoaderPass());
             $container->addCompilerPass(new TwigCompilerPass());
             $container->addCompilerPass(new NodeVisitorContainerPass());
+            $container->addCompilerPass(new RegisterListenersPass(EventDispatcherInterface::class), PassConfig::TYPE_BEFORE_REMOVING);
             $container->registerExtension($extension);
             $container->loadFromExtension($extension->getAlias());
             $container->prependExtensionConfig($extension->getAlias(), $config);
@@ -180,6 +172,53 @@ class Application extends BaseApplication
 
         require_once $cacheContainer;
         $this->container = new \AppContainer($this->loader);
+    }
+
+    private function resolveAbstractTasks(array &$config) :void
+    {
+        $abstracts = [];
+
+        foreach ($config['tasks'] as $name => $task) {
+            if (isset($task['abstract']) && (bool)$task['abstract']) {
+                unset(
+                    $config['tasks'][$name],
+                    $task['abstract']
+                );
+                $abstracts[$name] = $task;
+            }
+        }
+
+        foreach ($config['tasks'] as $name => &$task) {
+            if (isset($task['extends'])) {
+                $extends = (array)$task['extends'];
+                unset($task['extends']);
+                foreach ($extends as $e) {
+                    if (false === array_key_exists($e, $abstracts)) {
+                        throw new PluginException(sprintf('Task "%s" extends non existing abstract task "%s"', $name, $e));
+                    }
+                    $this->merge($task, $abstracts[$e]);
+                }
+            }
+        }
+
+    }
+
+    private function merge(array &$a, array $b) :void
+    {
+        foreach ($b as $name => $value) {
+            if (!isset($a[$name])) {
+                $a[$name] = $b[$name];
+                continue;
+            }
+            if (is_array($value) && [] !== $value) {
+                if (array_keys($value) === range(0, count($value) - 1)) {
+                    // sequential
+                    $a[$name] = array_merge($a[$name], $b[$name]);
+                } else {
+                    $this->merge($a[$name], $b[$name]);
+                }
+            }
+        }
     }
 
     private function geTwigCache($cache, string $hash)
